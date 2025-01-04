@@ -25,6 +25,7 @@ public class GamePanel extends JPanel implements Runnable {
     public static ArrayList<Piece> pieces = new ArrayList<>();
     public static ArrayList<Piece> simPieces = new ArrayList<>();
     Piece activePiece;
+    public static Piece castlingPiece;
 
     // BOOLEANS
     boolean canMove;
@@ -55,14 +56,14 @@ public class GamePanel extends JPanel implements Runnable {
         pieces.add(new Pawn(WHITE, 5, 6));
         pieces.add(new Pawn(WHITE, 6, 6));
         pieces.add(new Pawn(WHITE, 7, 6));
-        pieces.add(new Rook(WHITE, 0, 4));
+        pieces.add(new Rook(WHITE, 0, 7));
         pieces.add(new Rook(WHITE, 7, 7));
-        pieces.add(new Knight(WHITE, 1, 7));
-        pieces.add(new Knight(WHITE, 6, 7));
-        pieces.add(new Bishop(WHITE, 2, 5));
-        pieces.add(new Bishop(WHITE, 5, 7));
+        //pieces.add(new Knight(WHITE, 1, 7));
+        //pieces.add(new Knight(WHITE, 6, 7));
+        //pieces.add(new Bishop(WHITE, 2, 7));
+        //pieces.add(new Bishop(WHITE, 5, 7));
         pieces.add(new King(WHITE, 4, 7));
-        pieces.add(new Queen(WHITE, 3, 3));
+        //pieces.add(new Queen(WHITE, 3, 7));
         // Blacks
         pieces.add(new Pawn(BLACK, 0, 1));
         pieces.add(new Pawn(BLACK, 1, 1));
@@ -135,8 +136,12 @@ public class GamePanel extends JPanel implements Runnable {
                 if (validSquare) { // Move confirmed
                     // Update the piece list in case a piece has been captured and removed during the simulation
                     copyPieces(simPieces, pieces);
-
                     activePiece.updatePosition();
+                    if (castlingPiece != null) {
+                        castlingPiece.updatePosition();
+                    }
+
+                    changePlayer();
                 } else {
                     // The move is not valid so reset everything
                     copyPieces(pieces, simPieces);
@@ -156,6 +161,13 @@ public class GamePanel extends JPanel implements Runnable {
         // This is basically for restoring the removed piece during the simulation
         copyPieces(pieces, simPieces);
 
+        // Reset the castling piece's position
+        if (castlingPiece != null) {
+            castlingPiece.col = castlingPiece.preCol;
+            castlingPiece.x = castlingPiece.getX(castlingPiece.col);
+            castlingPiece = null;
+        }
+
         // If a piece is being held, update its position
         activePiece.x = mouse.x - Board.HALF_SQUARE_SIZE;
         activePiece.y = mouse.y - Board.HALF_SQUARE_SIZE;
@@ -171,8 +183,27 @@ public class GamePanel extends JPanel implements Runnable {
                 simPieces.remove(activePiece.hittingPiece.getIndex());
             }
 
+            checkCastling();
+
             validSquare = true;
         }
+    }
+
+    private void checkCastling() {
+        if (castlingPiece != null) {
+            if (castlingPiece.col == 0) {
+                castlingPiece.col += 3;
+            }
+            else if (castlingPiece.col == 7) {
+                castlingPiece.col -= 2;
+            }
+            castlingPiece.x = castlingPiece.getX(castlingPiece.col);
+        }
+    }
+
+    private void changePlayer() {
+        currentColor = (currentColor == WHITE) ? BLACK : WHITE;
+        activePiece = null;
     }
 
     public void paintComponent(Graphics g) {
@@ -198,6 +229,18 @@ public class GamePanel extends JPanel implements Runnable {
 
             // Draw the active piece in the end so it won't be hidden by the board or the colored square
             activePiece.draw(g2d);
+        }
+
+        // Status messages
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setFont(new Font("Times New Roman", Font.PLAIN, 40));
+        g2d.setColor(Color.WHITE);
+
+        if (currentColor == WHITE) {
+            g2d.drawString("White's turn", 840, 550);
+        } else {
+            g2d.drawString("Black's turn", 840, 250);
+
         }
     }
 
