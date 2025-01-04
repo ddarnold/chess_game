@@ -17,7 +17,7 @@ public class Bishop extends Piece {
     @Override
     public boolean canMove(int targetCol, int targetRow) {
         if (isWithinBoard(targetCol, targetRow) && !isSameSquare(targetCol, targetRow)) {
-            if (Math.abs(targetCol - preCol) == Math.abs(targetRow - preRow)) {
+            if (Math.abs(targetCol - preCol) == Math.abs(targetRow - preRow)) { // it can move diagonally
                 if (isValidSquare(targetCol, targetRow) && !pieceIsOnDiagonalLine(targetCol, targetRow)) {
                     return true;
                 }
