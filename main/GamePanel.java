@@ -193,8 +193,7 @@ public class GamePanel extends JPanel implements Runnable {
         if (castlingPiece != null) {
             if (castlingPiece.col == 0) {
                 castlingPiece.col += 3;
-            }
-            else if (castlingPiece.col == 7) {
+            } else if (castlingPiece.col == 7) {
                 castlingPiece.col -= 2;
             }
             castlingPiece.x = castlingPiece.getX(castlingPiece.col);
@@ -202,7 +201,23 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void changePlayer() {
-        currentColor = (currentColor == WHITE) ? BLACK : WHITE;
+        if (currentColor == WHITE) {
+            currentColor = BLACK;
+            // Reset black's two stepped status
+            for (Piece piece : pieces) {
+                if (piece.color == BLACK) {
+                    piece.twoStepped = false;
+                }
+            }
+        } else {
+            currentColor = WHITE;
+            // Reset white's two stepped status
+            for (Piece piece : pieces) {
+                if (piece.color == WHITE) {
+                    piece.twoStepped = false;
+                }
+            }
+        }
         activePiece = null;
     }
 
