@@ -12,4 +12,19 @@ public class King extends Piece {
             image = getImage("/piece/UI_Project_Chess_B_King");
         }
     }
+
+    @Override
+    public boolean canMove(int targetCol, int targetRow) {
+        if (isWithinBoard(targetCol, targetRow)) {
+            if (Math.abs(targetCol - preCol) + Math.abs(targetRow - preRow) == 1 || // up, down, left, right
+                    (Math.abs(targetCol - preCol) * Math.abs(targetRow - preRow) == 1)) // diagonals
+            {
+                if (isValidSquare(targetCol, targetRow)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }
