@@ -60,12 +60,12 @@ public class GamePanel extends JPanel implements Runnable {
         pieces.add(new Pawn(WHITE, 7, 6));
         pieces.add(new Rook(WHITE, 0, 7));
         pieces.add(new Rook(WHITE, 7, 7));
-        //pieces.add(new Knight(WHITE, 1, 7));
-        //pieces.add(new Knight(WHITE, 6, 7));
-        //pieces.add(new Bishop(WHITE, 2, 7));
-        //pieces.add(new Bishop(WHITE, 5, 7));
+        pieces.add(new Knight(WHITE, 1, 7));
+        pieces.add(new Knight(WHITE, 6, 7));
+        pieces.add(new Bishop(WHITE, 2, 7));
+        pieces.add(new Bishop(WHITE, 5, 7));
         pieces.add(new King(WHITE, 4, 7));
-        //pieces.add(new Queen(WHITE, 3, 7));
+        pieces.add(new Queen(WHITE, 3, 7));
         // Blacks
         pieces.add(new Pawn(BLACK, 0, 1));
         pieces.add(new Pawn(BLACK, 1, 1));
@@ -196,8 +196,22 @@ public class GamePanel extends JPanel implements Runnable {
 
             checkCastling();
 
-            validSquare = true;
+            if (!isIllegal(activePiece)) {
+                validSquare = true;
+            }
         }
+    }
+
+    private boolean isIllegal(Piece king) {
+        if (king.type == Type.KING) {
+            for (Piece piece : simPieces) {
+                if (piece != king && piece.color != king.color && piece.canMove(king.col, king.row)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void checkCastling() {
@@ -283,10 +297,17 @@ public class GamePanel extends JPanel implements Runnable {
 
         if (activePiece != null) {
             if (canMove) {
-                g2d.setColor(Color.white);
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                if (isIllegal(activePiece)) {
+                    g2d.setColor(Color.red);
+                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                    g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                } else {
+                    g2d.setColor(Color.white);
+                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                    g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                }
             }
 
             // Draw the active piece in the end so it won't be hidden by the board or the colored square
