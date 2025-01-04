@@ -7,22 +7,30 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements Runnable {
+    Thread gameThread;
+    Board board = new Board();
+    Mouse mouse = new Mouse();
+
+    // PANEL
     public static final int WIDTH = 1100;
     public static final int HEIGHT = 800;
+    final int FPS = 60;
+
     // COLOR
     public static final int WHITE = 1;
     public static final int BLACK = 0;
+    int currentColor = WHITE;
+
     // PIECES
     public static ArrayList<Piece> pieces = new ArrayList<>();
     public static ArrayList<Piece> simPieces = new ArrayList<>();
-    final int FPS = 60;
-    Thread gameThread;
-    Board board = new Board();
-    int currentColor = WHITE;
+    Piece activePiece;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setBackground(Color.black);
+        addMouseMotionListener(mouse);
+        addMouseListener(mouse);
 
         setPieces();
         copyPieces(pieces, simPieces);
@@ -101,6 +109,38 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void update() {
+        if (mouse.pressed) {
+            if (activePiece == null) {
+                // If the activePiece is null, check if you can pick up a piece
+                for (Piece piece : pieces) {
+                    // If the mouse is on an ally piece pick it up as the activeP
+                    if (piece.color == currentColor &&
+                            piece.col == mouse.x / Board.SQUARE_SIZE &&
+                            piece.row == mouse.y / Board.SQUARE_SIZE) {
+                        activePiece = piece;
+                    }
+                }
+            } else {
+                // If the player is holding a piece, simulate the move
+                simulate();
+            }
+        }
+
+        // Mouse button released
+        if (!mouse.pressed) {
+            if (activePiece != null) {
+                activePiece.updatePosition();
+                activePiece = null;
+            }
+        }
+    }
+
+    private void simulate() {
+        // If a piece is being held, update its position
+        activePiece.x = mouse.x - Board.HALF_SQUARE_SIZE;
+        activePiece.y = mouse.y - Board.HALF_SQUARE_SIZE;
+        activePiece.col = activePiece.getCol(activePiece.x);
+        activePiece.row = activePiece.getRow(activePiece.y);
 
     }
 
@@ -115,6 +155,16 @@ public class GamePanel extends JPanel implements Runnable {
         // Pieces
         for (Piece piece : pieces) {
             piece.draw(g2d);
+        }
+
+        if (activePiece != null) {
+            g2d.setColor(Color.white);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+            g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+            // Draw the active piece in the end so it won't be hidden by the board or the colored square
+            activePiece.draw(g2d);
         }
     }
 
