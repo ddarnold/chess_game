@@ -33,6 +33,7 @@ public class GamePanel extends JPanel implements Runnable {
     boolean validSquare;
     boolean promotion;
     boolean gameOver;
+    boolean stalemate;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -118,7 +119,7 @@ public class GamePanel extends JPanel implements Runnable {
     private void update() {
         if (promotion) {
             promoting();
-        } else if (!gameOver) {
+        } else if (!gameOver && !stalemate) {
             if (mouse.pressed) {
                 if (activePiece == null) {
                     // If the activePiece is null, check if you can pick up a piece
@@ -147,6 +148,8 @@ public class GamePanel extends JPanel implements Runnable {
 
                         if (isKingInCheck() && isCheckmate()) {
                             gameOver = true;
+                        } else if (isStalemate() && !isKingInCheck()) {
+                            stalemate = true;
                         } else {
                             if (canPromote()) {
                                 promotion = true;
@@ -422,6 +425,23 @@ public class GamePanel extends JPanel implements Runnable {
         return isValidMove;
     }
 
+    private boolean isStalemate() {
+        int count = 0;
+        // Count the number of pieces
+        for (Piece piece : simPieces) {
+            if (piece.color != currentColor) {
+                count++;
+            }
+        }
+
+        // Ifo nly one piece (the king) is left
+        if (count == 1) {
+            return !kingCanMove(getKing(true));
+        }
+
+        return false;
+    }
+
     private void checkCastling() {
         if (castlingPiece != null) {
             if (castlingPiece.col == 0) {
@@ -568,7 +588,12 @@ public class GamePanel extends JPanel implements Runnable {
             }
             g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
             g2d.setColor(Color.GREEN);
-            g2d. drawString(s, 200, 420);
+            g2d.drawString(s, 200, 420);
+        }
+        if (stalemate) {
+            g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.drawString("Stalemate", 200, 420);
         }
     }
 
