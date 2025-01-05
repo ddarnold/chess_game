@@ -7,6 +7,8 @@ public class Board {
     public static final int HALF_SQUARE_SIZE = SQUARE_SIZE / 2;
     final int MAX_COL = 8;
     final int MAX_ROW = 8;
+
+    // COLORS
     final Color DARK_SQUARE_COLOR_GREEN = new Color(118, 150, 86);
     final Color LIGHT_SQUARE_COLOR_GREEN = new Color(238, 238, 210);
 
