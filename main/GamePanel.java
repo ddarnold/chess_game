@@ -161,7 +161,7 @@ public class GamePanel extends JPanel implements Runnable {
                             gameOver = true;
                         } else if (isStalemate() && !isKingInCheck()) {
                             stalemate = true;
-                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw()) {
+                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
                             draw = true;
                         } else {
                             if (canPromote()) {
@@ -480,6 +480,93 @@ public class GamePanel extends JPanel implements Runnable {
         return false;
     }
 
+    private boolean isDeadPosition() {
+        int whiteMaterial = 0;
+        int blackMaterial = 0;
+
+        boolean whiteHasBishop = false;
+        boolean blackHasBishop = false;
+
+        int whiteKnights = 0;
+        int blackKnights = 0;
+
+        for (Piece piece : pieces) {
+            if (piece.type == Type.PAWN) {
+                return false; // Pawns mean there is still potential for checkmate
+            }
+
+            if (piece.type == Type.QUEEN || piece.type == Type.ROOK) {
+                return false; // Queens and rooks can checkmate
+            }
+
+            if (piece.type == Type.BISHOP) {
+                if (piece.color == WHITE) {
+                    whiteMaterial++;
+                    whiteHasBishop = true;
+                } else {
+                    blackMaterial++;
+                    blackHasBishop = true;
+                }
+            }
+
+            if (piece.type == Type.KNIGHT) {
+                if (piece.color == WHITE) {
+                    whiteMaterial++;
+                    whiteKnights++;
+                } else {
+                    blackMaterial++;
+                    blackKnights++;
+                }
+            }
+        }
+
+        // King vs King
+        if (pieces.size() == 2) {
+            return true;
+        }
+
+        // King vs King and Bishop
+        if (pieces.size() == 3 && (whiteHasBishop || blackHasBishop)) {
+            return true;
+        }
+
+        // King vs King and Knight
+        if (pieces.size() == 3 && (whiteMaterial == 1 || blackMaterial == 1)) {
+            return true;
+        }
+
+        // King and Bishop vs King and Bishop (both bishops on the same color)
+        if (pieces.size() == 4 && whiteHasBishop && blackHasBishop) {
+            return bishopsOnSameColor();
+        }
+
+        // King and 2 Knights vs King (or King vs King and 2 Knights)
+        if (pieces.size() == 4 && (whiteKnights == 2 && blackMaterial == 0 || blackKnights == 2 && whiteMaterial == 0)) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    private boolean bishopsOnSameColor() {
+        boolean whiteBishopOnWhiteSquare = false;
+        boolean blackBishopOnWhiteSquare = false;
+
+        for (Piece piece : pieces) {
+            if (piece.type == Type.BISHOP) {
+                int squareColor = (piece.col + piece.row) % 2;
+                if (piece.color == WHITE) {
+                    whiteBishopOnWhiteSquare = (squareColor == 0);
+                } else {
+                    blackBishopOnWhiteSquare = (squareColor == 0);
+                }
+            }
+        }
+
+        return whiteBishopOnWhiteSquare == blackBishopOnWhiteSquare;
+    }
+
     private String getBoardState() {
         StringBuilder state = new StringBuilder();
 
@@ -492,7 +579,6 @@ public class GamePanel extends JPanel implements Runnable {
 
         return state.toString();
     }
-
 
     private void checkCastling() {
         if (castlingPiece != null) {
