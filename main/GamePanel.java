@@ -5,11 +5,15 @@ import piece.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GamePanel extends JPanel implements Runnable {
     Thread gameThread;
     Board board = new Board();
     Mouse mouse = new Mouse();
+
+    private HashMap<String, Integer> boardStates = new HashMap<>();
+
 
     // PANEL
     public static final int WIDTH = 1100;
@@ -34,9 +38,10 @@ public class GamePanel extends JPanel implements Runnable {
     boolean promotion;
     boolean gameOver;
     boolean stalemate;
+    boolean draw;
 
     // COUNTERS
-    int fiftyMoveCounter = 0;
+    static int fiftyMoveCounter = 0;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -154,8 +159,10 @@ public class GamePanel extends JPanel implements Runnable {
 
                         if (isKingInCheck() && isCheckmate()) {
                             gameOver = true;
-                        } else if ((isStalemate() && !isKingInCheck()) || isFiftyMovesStalemate(activePiece)) {
+                        } else if (isStalemate() && !isKingInCheck()) {
                             stalemate = true;
+                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw()) {
+                            draw = true;
                         } else {
                             if (canPromote()) {
                                 promotion = true;
@@ -448,12 +455,10 @@ public class GamePanel extends JPanel implements Runnable {
         return false;
     }
 
-    private boolean isFiftyMovesStalemate(Piece activePiece) {
-        fiftyMoveCounter++;
-
+    private boolean isFiftyMovesDraw(Piece activePiece) {
         // reset the 50 moves counter when pawn moves or other piece is taken
         if (activePiece.type == Type.PAWN || activePiece.hittingPiece != null) {
-            fiftyMoveCounter = 0;
+            fiftyMoveCounter = -1;
         }
 
         // a draw if no capture has been made and no pawn has been moved in the last fifty moves
@@ -463,6 +468,31 @@ public class GamePanel extends JPanel implements Runnable {
 
         return false;
     }
+
+    private boolean isRepetitionDraw() {
+        String state = getBoardState();
+        boardStates.put(state, boardStates.getOrDefault(state, 0) + 1);
+
+        if (boardStates.get(state) >= 3) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private String getBoardState() {
+        StringBuilder state = new StringBuilder();
+
+        for (Piece piece : pieces) {
+            state.append(piece.type).append(piece.color)
+                    .append(piece.col).append(piece.row).append(";");
+        }
+
+        state.append(currentColor).append(";");
+
+        return state.toString();
+    }
+
 
     private void checkCastling() {
         if (castlingPiece != null) {
@@ -476,6 +506,8 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void changePlayer() {
+        fiftyMoveCounter++;
+
         if (currentColor == WHITE) {
             currentColor = BLACK;
             // Reset black's two stepped status
@@ -615,11 +647,16 @@ public class GamePanel extends JPanel implements Runnable {
         if (stalemate) {
             g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
             g2d.setColor(Color.LIGHT_GRAY);
+            g2d.drawString("Stalemate", 200, 420);
+        }
+        if (draw) {
+            g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
+            g2d.setColor(Color.LIGHT_GRAY);
             if (fiftyMoveCounter == 50) {
-                g2d.drawString(" 50 Move Draw", 120, 420);
+                g2d.drawString(" 50 Move Draw", 80, 420);
 
             } else {
-                g2d.drawString("Stalemate", 200, 420);
+                g2d.drawString("Draw", 250, 420);
 
             }
         }
