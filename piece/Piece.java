@@ -93,7 +93,7 @@ public class Piece {
     }
 
     public boolean isWithinBoard(int targetCol, int targetRow) {
-        return targetCol >= 0 && targetCol < Board.SQUARE_SIZE && targetRow >= 0 && targetRow < Board.SQUARE_SIZE;
+        return targetCol >= 0 && targetCol < 8 && targetRow >= 0 && targetRow < 8;
     }
 
     public boolean isSameSquare(int targetCol, int targetRow) {
