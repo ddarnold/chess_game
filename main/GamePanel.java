@@ -104,7 +104,7 @@ public class GamePanel extends JPanel implements Runnable {
     public void run() {
         // Game Loop
 
-        double drawInterval = 1000000000 / FPS;
+        double drawInterval = (double) 1000000000 / FPS;
         double delta = 0;
         long lastTime = System.nanoTime();
         long currentTime;
@@ -335,7 +335,7 @@ public class GamePanel extends JPanel implements Runnable {
                 // The checking piece is attacking diagonally
                 if (checkingPiece.row < king.row) {
                     // The checking piece is above the King
-                    if (checkingPiece.row < king.row) {
+                    if (checkingPiece.col < king.col) {
                         // The checking piece is in the upper left
                         for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row++) {
                             for (Piece piece : simPieces) {
@@ -358,7 +358,7 @@ public class GamePanel extends JPanel implements Runnable {
                 }
                 if (checkingPiece.row > king.row) {
                     // The checking piece is below the King
-                    if (checkingPiece.row < king.row) {
+                    if (checkingPiece.col < king.col) {
                         // The checking piece is in the lower left
                         for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row--) {
                             for (Piece piece : simPieces) {
@@ -676,15 +676,12 @@ public class GamePanel extends JPanel implements Runnable {
             if (canMove) {
                 if (isIllegal(activePiece) || opponentCanCaptureKing()) {
                     g2d.setColor(Color.red);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                    g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
                 } else {
                     g2d.setColor(Color.white);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                    g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
                 }
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
             }
 
             // Draw the active piece in the end so it won't be hidden by the board or the colored square
@@ -720,7 +717,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         if (gameOver) {
-            String s = "";
+            String s;
             if (currentColor == WHITE) {
                 s = "White wins";
             } else {
