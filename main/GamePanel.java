@@ -5,6 +5,7 @@ import piece.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import static main.Constants.MARGIN_X;
 import static main.Constants.MARGIN_Y;
@@ -14,6 +15,9 @@ public class GamePanel extends JPanel implements Runnable {
     Thread gameThread;
     Board board = new Board();
     Mouse mouse;
+
+    private HashMap<String, Integer> boardStates = new HashMap<>();
+
 
     // PANEL
     public static final int WIDTH = 1140;
@@ -39,6 +43,10 @@ public class GamePanel extends JPanel implements Runnable {
     boolean promotion;
     boolean gameOver;
     boolean stalemate;
+    boolean draw;
+
+    // COUNTERS
+    static int fiftyMoveCounter = 0;
 
     public GamePanel(JFrame parentWindow) {
         this.parentWindow = parentWindow;
@@ -147,10 +155,13 @@ public class GamePanel extends JPanel implements Runnable {
             // Mouse button released
             if (!mouse.pressed) {
                 if (activePiece != null) {
-                    if (validSquare) { // Move confirmed
+                    if (validSquare) {
+                        // MOVE CONFIRMED
+
                         // Update the piece list in case a piece has been captured and removed during the simulation
                         copyPieces(simPieces, pieces);
                         activePiece.updatePosition();
+
                         if (castlingPiece != null) {
                             castlingPiece.updatePosition();
                         }
@@ -159,6 +170,8 @@ public class GamePanel extends JPanel implements Runnable {
                             gameOver = true;
                         } else if (isStalemate() && !isKingInCheck()) {
                             stalemate = true;
+                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
+                            draw = true;
                         } else {
                             if (canPromote()) {
                                 promotion = true;
@@ -331,7 +344,7 @@ public class GamePanel extends JPanel implements Runnable {
                 // The checking piece is attacking diagonally
                 if (checkingPiece.row < king.row) {
                     // The checking piece is above the King
-                    if (checkingPiece.row < king.row) {
+                    if (checkingPiece.col < king.col) {
                         // The checking piece is in the upper left
                         for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row++) {
                             for (Piece piece : simPieces) {
@@ -354,7 +367,7 @@ public class GamePanel extends JPanel implements Runnable {
                 }
                 if (checkingPiece.row > king.row) {
                     // The checking piece is below the King
-                    if (checkingPiece.row < king.row) {
+                    if (checkingPiece.col < king.col) {
                         // The checking piece is in the lower left
                         for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row--) {
                             for (Piece piece : simPieces) {
@@ -451,6 +464,131 @@ public class GamePanel extends JPanel implements Runnable {
         return false;
     }
 
+    private boolean isFiftyMovesDraw(Piece activePiece) {
+        // reset the 50 moves counter when pawn moves or other piece is taken
+        if (activePiece.type == Type.PAWN || activePiece.hittingPiece != null) {
+            fiftyMoveCounter = -1;
+        }
+
+        // a draw if no capture has been made and no pawn has been moved in the last fifty moves
+        if (fiftyMoveCounter == 50) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isRepetitionDraw() {
+        String state = getBoardState();
+        boardStates.put(state, boardStates.getOrDefault(state, 0) + 1);
+
+        if (boardStates.get(state) >= 3) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isDeadPosition() {
+        int whiteMaterial = 0;
+        int blackMaterial = 0;
+
+        boolean whiteHasBishop = false;
+        boolean blackHasBishop = false;
+
+        int whiteKnights = 0;
+        int blackKnights = 0;
+
+        for (Piece piece : pieces) {
+            if (piece.type == Type.PAWN) {
+                return false; // Pawns mean there is still potential for checkmate
+            }
+
+            if (piece.type == Type.QUEEN || piece.type == Type.ROOK) {
+                return false; // Queens and rooks can checkmate
+            }
+
+            if (piece.type == Type.BISHOP) {
+                if (piece.color == WHITE) {
+                    whiteMaterial++;
+                    whiteHasBishop = true;
+                } else {
+                    blackMaterial++;
+                    blackHasBishop = true;
+                }
+            }
+
+            if (piece.type == Type.KNIGHT) {
+                if (piece.color == WHITE) {
+                    whiteMaterial++;
+                    whiteKnights++;
+                } else {
+                    blackMaterial++;
+                    blackKnights++;
+                }
+            }
+        }
+
+        // King vs King
+        if (pieces.size() == 2) {
+            return true;
+        }
+
+        // King vs King and Bishop
+        if (pieces.size() == 3 && (whiteHasBishop || blackHasBishop)) {
+            return true;
+        }
+
+        // King vs King and Knight
+        if (pieces.size() == 3 && (whiteMaterial == 1 || blackMaterial == 1)) {
+            return true;
+        }
+
+        // King and Bishop vs King and Bishop (both bishops on the same color)
+        if (pieces.size() == 4 && whiteHasBishop && blackHasBishop) {
+            return bishopsOnSameColor();
+        }
+
+        // King and 2 Knights vs King (or King vs King and 2 Knights)
+        if (pieces.size() == 4 && (whiteKnights == 2 && blackMaterial == 0 || blackKnights == 2 && whiteMaterial == 0)) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    private boolean bishopsOnSameColor() {
+        boolean whiteBishopOnWhiteSquare = false;
+        boolean blackBishopOnWhiteSquare = false;
+
+        for (Piece piece : pieces) {
+            if (piece.type == Type.BISHOP) {
+                int squareColor = (piece.col + piece.row) % 2;
+                if (piece.color == WHITE) {
+                    whiteBishopOnWhiteSquare = (squareColor == 0);
+                } else {
+                    blackBishopOnWhiteSquare = (squareColor == 0);
+                }
+            }
+        }
+
+        return whiteBishopOnWhiteSquare == blackBishopOnWhiteSquare;
+    }
+
+    private String getBoardState() {
+        StringBuilder state = new StringBuilder();
+
+        for (Piece piece : pieces) {
+            state.append(piece.type).append(piece.color)
+                    .append(piece.col).append(piece.row).append(";");
+        }
+
+        state.append(currentColor).append(";");
+
+        return state.toString();
+    }
+
     private void checkCastling() {
         if (castlingPiece != null) {
             if (castlingPiece.col == 0) {
@@ -463,6 +601,8 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void changePlayer() {
+        fiftyMoveCounter++;
+
         if (currentColor == WHITE) {
             currentColor = BLACK;
             // Reset black's two stepped status
@@ -606,6 +746,17 @@ public class GamePanel extends JPanel implements Runnable {
             g2d.setFont(Utils.deriveFont(90, Font.PLAIN));
             g2d.setColor(Color.LIGHT_GRAY);
             g2d.drawString("Stalemate", 200, 420);
+        }
+        if (draw) {
+            g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
+            g2d.setColor(Color.LIGHT_GRAY);
+            if (fiftyMoveCounter == 50) {
+                g2d.drawString(" 50 Move Draw", 80, 420);
+
+            } else {
+                g2d.drawString("Draw", 250, 420);
+
+            }
         }
     }
 
