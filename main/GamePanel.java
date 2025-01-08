@@ -6,20 +6,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
+import static main.Constants.MARGIN_X;
+import static main.Constants.MARGIN_Y;
+
 public class GamePanel extends JPanel implements Runnable {
+    JFrame parentWindow;
     Thread gameThread;
     Board board = new Board();
-    Mouse mouse = new Mouse();
+    Mouse mouse;
 
     // PANEL
-    public static final int WIDTH = 1100;
-    public static final int HEIGHT = 800;
+    public static final int WIDTH = 1140;
+    public static final int HEIGHT = 870;
     final int FPS = 60;
 
     // COLOR
     public static final int WHITE = 1;
     public static final int BLACK = 0;
-    int currentColor = WHITE;
+    public static int currentColor = WHITE;
+
 
     // PIECES
     public static ArrayList<Piece> pieces = new ArrayList<>();
@@ -35,12 +40,13 @@ public class GamePanel extends JPanel implements Runnable {
     boolean gameOver;
     boolean stalemate;
 
-    public GamePanel() {
+    public GamePanel(JFrame parentWindow) {
+        this.parentWindow = parentWindow;
+        mouse = new Mouse(parentWindow);
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setBackground(Color.black);
         addMouseMotionListener(mouse);
         addMouseListener(mouse);
-
         setPieces();
         copyPieces(pieces, simPieces);
     }
@@ -96,7 +102,7 @@ public class GamePanel extends JPanel implements Runnable {
     public void run() {
         // Game Loop
 
-        double drawInterval = 1000000000 / FPS;
+        double drawInterval = (double) 1000000000 / FPS;
         double delta = 0;
         long lastTime = System.nanoTime();
         long currentTime;
@@ -116,6 +122,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     }
 
+
     private void update() {
         if (promotion) {
             promoting();
@@ -124,8 +131,10 @@ public class GamePanel extends JPanel implements Runnable {
                 if (activePiece == null) {
                     // If the activePiece is null, check if you can pick up a piece
                     for (Piece piece : pieces) {
-                        // If the mouse is on an ally piece pick it up as the activeP
-                        if (piece.color == currentColor && piece.col == mouse.x / Board.SQUARE_SIZE && piece.row == mouse.y / Board.SQUARE_SIZE) {
+                        // If the mouse is on an ally piece, pick it up as the activePiece
+                        int adjustedMouseCol = (mouse.x - MARGIN_X) / Board.SQUARE_SIZE;
+                        int adjustedMouseRow = (mouse.y - MARGIN_Y) / Board.SQUARE_SIZE;
+                        if (piece.color == currentColor && piece.col == adjustedMouseCol && piece.row == adjustedMouseRow) {
                             activePiece = piece;
                         }
                     }
@@ -181,13 +190,13 @@ public class GamePanel extends JPanel implements Runnable {
         // Reset the castling piece's position
         if (castlingPiece != null) {
             castlingPiece.col = castlingPiece.preCol;
-            castlingPiece.x = castlingPiece.getX(castlingPiece.col);
+            castlingPiece.x = MARGIN_X + castlingPiece.getX(castlingPiece.col);
             castlingPiece = null;
         }
 
         // If a piece is being held, update its position
-        activePiece.x = mouse.x - Board.HALF_SQUARE_SIZE;
-        activePiece.y = mouse.y - Board.HALF_SQUARE_SIZE;
+        activePiece.x = mouse.x - Board.HALF_SQUARE_SIZE - MARGIN_X;
+        activePiece.y = mouse.y - Board.HALF_SQUARE_SIZE - MARGIN_Y;
         activePiece.col = activePiece.getCol(activePiece.x);
         activePiece.row = activePiece.getRow(activePiece.y);
 
@@ -533,50 +542,21 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         if (activePiece != null) {
+            int x = MARGIN_X + activePiece.col * Board.SQUARE_SIZE;
+            int y = MARGIN_Y + activePiece.row * Board.SQUARE_SIZE;
             if (canMove) {
                 if (isIllegal(activePiece) || opponentCanCaptureKing()) {
                     g2d.setColor(Color.red);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                    g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
                 } else {
-                    g2d.setColor(Color.white);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                    g2d.fillRect(activePiece.col * Board.SQUARE_SIZE, activePiece.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                    g2d.setColor(Color.black);
                 }
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                g2d.fillRect(x, y, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
             }
 
             // Draw the active piece in the end so it won't be hidden by the board or the colored square
             activePiece.draw(g2d);
-        }
-
-        // Status messages
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.setFont(new Font("Times New Roman", Font.PLAIN, 40));
-        g2d.setColor(Color.WHITE);
-
-        if (promotion) {
-            g2d.drawString("Promote to:", 840, 150);
-            for (Piece piece : promoPieces) {
-                g2d.drawImage(piece.image, piece.getX(piece.col), piece.getY(piece.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
-            }
-        } else {
-            if (currentColor == WHITE) {
-                g2d.drawString("White's turn", 840, 550);
-                if (checkingPiece != null && checkingPiece.color == BLACK) {
-                    g2d.setColor(Color.red);
-                    g2d.drawString("The King", 840, 650);
-                    g2d.drawString("is in check!", 840, 700);
-                }
-            } else {
-                g2d.drawString("Black's turn", 840, 250);
-                if (checkingPiece != null && checkingPiece.color == WHITE) {
-                    g2d.setColor(Color.red);
-                    g2d.drawString("The King", 840, 100);
-                    g2d.drawString("is in check!", 840, 150);
-                }
-            }
         }
 
         if (gameOver) {
@@ -586,12 +566,44 @@ public class GamePanel extends JPanel implements Runnable {
             } else {
                 s = "Black wins";
             }
-            g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
-            g2d.setColor(Color.GREEN);
-            g2d.drawString(s, 200, 420);
+            g2d.setFont(Utils.deriveFont(90, Font.PLAIN));
+            g2d.fillRoundRect(180, 330, currentColor == WHITE ? 475 : 450, 100, 20, 20);
+            g2d.setColor(Color.RED);
+            g2d.drawString(s, 200, 410);
+        } else {
+
+            // Status messages
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setFont(Utils.deriveFont(40, Font.PLAIN));
+            g2d.setColor(Color.WHITE);
+
+            if (promotion) {
+                g2d.drawString("Promote to:", 840, 150);
+                for (Piece piece : promoPieces) {
+                    g2d.drawImage(piece.image, piece.getX(piece.col), piece.getY(piece.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
+                }
+            } else {
+                if (currentColor == WHITE) {
+                    g2d.drawString("White's turn", 840, 550);
+                    if (checkingPiece != null && checkingPiece.color == BLACK) {
+                        g2d.setColor(Color.red);
+                        g2d.drawString("The King", 840, 650);
+                        g2d.drawString("is in check!", 840, 700);
+                    }
+                } else {
+                    g2d.drawString("Black's turn", 840, 250);
+                    if (checkingPiece != null && checkingPiece.color == WHITE) {
+                        g2d.setColor(Color.red);
+                        g2d.drawString("The King", 840, 100);
+                        g2d.drawString("is in check!", 840, 150);
+                    }
+                }
+            }
         }
+
+
         if (stalemate) {
-            g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
+            g2d.setFont(Utils.deriveFont(90, Font.PLAIN));
             g2d.setColor(Color.LIGHT_GRAY);
             g2d.drawString("Stalemate", 200, 420);
         }

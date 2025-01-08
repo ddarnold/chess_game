@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import static main.Constants.*;
+
 public class Piece {
 
     public Type type;
@@ -18,6 +20,7 @@ public class Piece {
     public int color;
     public Piece hittingPiece;
     public boolean moved, twoStepped;
+
 
     public Piece(int color, int col, int row) {
         this.color = color;
@@ -69,7 +72,7 @@ public class Piece {
     public void updatePosition() {
         // To check En Passant
         if (type == Type.PAWN) {
-            if (Math.abs(row - preRow ) == 2){
+            if (Math.abs(row - preRow) == 2) {
                 twoStepped = true;
             }
         }
@@ -93,7 +96,7 @@ public class Piece {
     }
 
     public boolean isWithinBoard(int targetCol, int targetRow) {
-        return targetCol >= 0 && targetCol < Board.SQUARE_SIZE && targetRow >= 0 && targetRow < Board.SQUARE_SIZE;
+        return targetCol >= 0 && targetCol < 8 && targetRow >= 0 && targetRow < 8;
     }
 
     public boolean isSameSquare(int targetCol, int targetRow) {
@@ -219,6 +222,12 @@ public class Piece {
     }
 
     public void draw(Graphics2D g2) {
-        g2.drawImage(image, x, y, Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
+        g2.drawImage(
+                image, x + MARGIN_X + SCALED_DOWN_VALUE,
+                y + MARGIN_Y + SCALED_DOWN_VALUE,
+                Board.SQUARE_SIZE - SCALED_DOWN_VALUE * 2,
+                Board.SQUARE_SIZE - SCALED_DOWN_VALUE * 2,
+                null
+        );
     }
 }
