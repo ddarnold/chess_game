@@ -242,7 +242,7 @@ public class GamePanel extends JPanel implements Runnable {
         Piece king = getKing(true);
 
         for (Piece piece : simPieces) {
-            if (piece.canMove(king.col, king.row)) {
+            if( piece.color != king.color && piece.canMove(king.col, king.row)) {
                 checkingPiece = piece;
                 return true;
             }
@@ -388,6 +388,15 @@ public class GamePanel extends JPanel implements Runnable {
                         }
                     }
                 }
+            } else {
+                // Knight attacking
+                for (Piece piece : simPieces) {
+                    if (piece != king && piece.color != currentColor) {
+                        if(piece.canMove(checkingPiece.col, checkingPiece.row)) {
+                            return false;
+                        }
+                    }
+                }
             }
         }
 
@@ -456,7 +465,7 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        // Ifo nly one piece (the king) is left
+        // Ifo only one piece (the king) is left
         if (count == 1) {
             return !kingCanMove(getKing(true));
         }
