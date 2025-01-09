@@ -127,7 +127,7 @@ public class GamePanel extends JPanel implements Runnable {
     private void update() {
         if (promotion) {
             promoting();
-        } else if (!gameOver && !stalemate) {
+        } else if (!gameOver && !stalemate && !draw) {
             if (mouse.pressed) {
                 if (activePiece == null) {
                     // If the activePiece is null, check if you can pick up a piece
