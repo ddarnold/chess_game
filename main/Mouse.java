@@ -14,9 +14,21 @@ public class Mouse extends MouseAdapter {
     public int x, y;
     public boolean pressed;
     private final JFrame parentWindow;
+    private final GamePanel gamePanel;
 
-    public Mouse(JFrame parentWindow) {
+    public Mouse(JFrame parentWindow, GamePanel gamePanel) {
         this.parentWindow = parentWindow;
+        this.gamePanel = gamePanel;
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        int buttonX = LAYOUT_WIDTH - 200 - 10;
+        int buttonY = LAYOUT_HEIGHT - 50 - 40;
+        if (e.getX() >= buttonX && e.getX() <= buttonX + 200 &&
+                e.getY() >= buttonY && e.getY() <= buttonY + 50) {
+            Utils.returnToHome(parentWindow, gamePanel);
+        }
     }
 
     @Override
@@ -60,6 +72,13 @@ public class Mouse extends MouseAdapter {
             parentWindow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         } else {
             parentWindow.setCursor(Cursor.getDefaultCursor());
+        }
+
+        int buttonX = LAYOUT_WIDTH - 200 - 10;
+        int buttonY = LAYOUT_HEIGHT - 50 - 40;
+        if (e.getX() >= buttonX && e.getX() <= buttonX + 200 &&
+                e.getY() >= buttonY && e.getY() <= buttonY + 50) {
+            parentWindow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
     }
 }

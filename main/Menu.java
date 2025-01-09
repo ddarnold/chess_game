@@ -8,10 +8,12 @@ import java.util.Objects;
 
 import static main.Constants.LAYOUT_HEIGHT;
 import static main.Constants.LAYOUT_WIDTH;
+import static main.Utils.createRoundedButton;
 
 public class Menu extends JPanel {
     private final JFrame parentWindow;
     private BufferedImage backgroundImage;
+    private GamePanel gamePanel;
 
     public Menu(JFrame parentWindow) {
         this.parentWindow = parentWindow;
@@ -55,30 +57,34 @@ public class Menu extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private RoundedButton createRoundedButton(String text) {
-        RoundedButton button = new RoundedButton(text);
-        button.setFont(Utils.deriveFont(25, Font.PLAIN));
-        button.setBackground(Color.DARK_GRAY);
-        button.setForeground(Color.WHITE);
-        button.setCornerRadius(50);
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-
     private void startGame() {
-        // Switch to game panel
-        parentWindow.getContentPane().removeAll();
-        GamePanel gamePanel = new GamePanel(parentWindow);
+        // Stop any existing game if necessary
+        if (gamePanel != null) {
+            //gamePanel.stopGame();
+            gamePanel = null;
+            parentWindow.getContentPane().removeAll();
+        }
+
+        // Create a new game panel and add it to the parent window
+        gamePanel = new GamePanel(parentWindow);
         Header header = new Header(parentWindow);
         parentWindow.add(header, BorderLayout.NORTH);
         parentWindow.add(gamePanel);
         parentWindow.revalidate();
         parentWindow.repaint();
+
+        // Start the game loop
         gamePanel.launchGame();
     }
 
     private void showSettings() {
-        JOptionPane.showMessageDialog(this, "Settings will be implemented later!", "Settings", JOptionPane.INFORMATION_MESSAGE);
+        parentWindow.getContentPane().removeAll();
+        Settings settings = new Settings(parentWindow);
+        Header header = new Header(parentWindow);
+        parentWindow.add(header, BorderLayout.NORTH);
+        parentWindow.add(settings);
+        parentWindow.revalidate();
+        parentWindow.repaint();
     }
 
     @Override
@@ -86,6 +92,8 @@ public class Menu extends JPanel {
         super.paintComponent(g);
         if (backgroundImage != null) {
             Graphics2D g2d = (Graphics2D) g.create();
+
+
 
             // Calculate aspect ratio
             int panelWidth = getWidth();

@@ -7,8 +7,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static main.Constants.MARGIN_X;
-import static main.Constants.MARGIN_Y;
+import static main.Constants.*;
+import static main.Utils.createHomeButton;
 
 public class GamePanel extends JPanel implements Runnable {
     JFrame parentWindow;
@@ -16,12 +16,9 @@ public class GamePanel extends JPanel implements Runnable {
     Board board = new Board();
     Mouse mouse;
 
-    private HashMap<String, Integer> boardStates = new HashMap<>();
+    private final HashMap<String, Integer> boardStates = new HashMap<>();
 
 
-    // PANEL
-    public static final int WIDTH = 1140;
-    public static final int HEIGHT = 870;
     final int FPS = 60;
 
     // COLOR
@@ -50,8 +47,8 @@ public class GamePanel extends JPanel implements Runnable {
 
     public GamePanel(JFrame parentWindow) {
         this.parentWindow = parentWindow;
-        mouse = new Mouse(parentWindow);
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        mouse = new Mouse(parentWindow, this);
+        setPreferredSize(new Dimension(LAYOUT_WIDTH, LAYOUT_HEIGHT));
         setBackground(Color.black);
         addMouseMotionListener(mouse);
         addMouseListener(mouse);
@@ -60,8 +57,10 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void launchGame() {
-        gameThread = new Thread(this);
-        gameThread.start();
+        if (gameThread == null) {
+            gameThread = new Thread(this);
+            gameThread.start();
+        }
     }
 
     public void setPieces() {
@@ -101,6 +100,11 @@ public class GamePanel extends JPanel implements Runnable {
         pieces.add(new Queen(BLACK, 3, 0));
     }
 
+    void stopGame(){
+        // Set gameThread to null to stop the loop
+        gameThread = null;
+    }
+
     private void copyPieces(ArrayList<Piece> source, ArrayList<Piece> target) {
         target.clear();
         target.addAll(source);
@@ -129,7 +133,6 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
     }
-
 
     private void update() {
         if (promotion) {
@@ -680,6 +683,36 @@ public class GamePanel extends JPanel implements Runnable {
         for (Piece piece : pieces) {
             piece.draw(g2d);
         }
+        int BUTTON_WIDTH = 200;
+        int BUTTON_HEIGHT = 50;
+
+        // Button position
+        int buttonX = LAYOUT_WIDTH - BUTTON_WIDTH - 10;
+        int buttonY = LAYOUT_HEIGHT - BUTTON_HEIGHT - 40;
+        g2d.setFont(Utils.deriveFont(25, Font.PLAIN));
+        // Set color and draw filled rounded rectangle
+        g2d.setColor(Color.DARK_GRAY);
+        g2d.fillRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 20, 20);
+
+        // Draw the text centered on the button
+        g2d.setColor(Color.WHITE);
+        String buttonText = "Home";
+        FontMetrics metrics = g2d.getFontMetrics();
+        int textX = buttonX + (BUTTON_WIDTH - metrics.stringWidth(buttonText)) / 2;
+        int textY = buttonY + ((BUTTON_HEIGHT - metrics.getHeight()) / 2) + metrics.getAscent();
+        g2d.drawString(buttonText, textX, textY);
+
+        g2d.setFont(Utils.deriveFont(40, Font.PLAIN));
+        g2d.setColor(Color.white);
+        //Print the vertical numbers
+        for (int i = 8; i >= 1; i--) {
+            g2d.drawString(String.valueOf(i), MARGIN_X / 2 - 10, 15 + Board.SQUARE_SIZE / 2 + MARGIN_Y + Board.SQUARE_SIZE * (8 - i));
+        }
+        //Print the horizontal letters
+        String[] letters = {"A", "B", "C", "D", "E", "F", "G", "H"};
+        for (int i = 0; i < 8; i++) {
+            g2d.drawString(letters[i], Board.SQUARE_SIZE/2 - 15 + MARGIN_X + Board.SQUARE_SIZE * i, MARGIN_Y-15);
+        }
 
         if (activePiece != null) {
             int x = MARGIN_X + activePiece.col * Board.SQUARE_SIZE;
@@ -748,7 +781,7 @@ public class GamePanel extends JPanel implements Runnable {
             g2d.drawString("Stalemate", 200, 420);
         }
         if (draw) {
-            g2d.setFont(new Font("Times New Roman", Font.PLAIN, 90));
+            g2d.setFont(Utils.deriveFont(90, Font.PLAIN));
             g2d.setColor(Color.LIGHT_GRAY);
             if (fiftyMoveCounter == 50) {
                 g2d.drawString(" 50 Move Draw", 80, 420);

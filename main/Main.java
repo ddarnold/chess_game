@@ -3,6 +3,7 @@ package main;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Objects;
 
 import static main.Constants.*;
 
@@ -12,6 +13,7 @@ public class Main {
 
         Font customFont = Utils.loadCustomFont("/res/font/vidaloka.ttf", 24f);
         setDefaultFont(customFont);
+        Utils.applyTheme(Objects.requireNonNull(Utils.readJson(PREFERENCES_THEME)));
 
         // Create main window
         JFrame window = new JFrame();
