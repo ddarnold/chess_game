@@ -157,13 +157,7 @@ public class GamePanel extends JPanel implements Runnable {
                             castlingPiece.updatePosition();
                         }
 
-                        if (isKingInCheck() && isCheckmate()) {
-                            gameOver = true;
-                        } else if (isStalemate() && !isKingInCheck()) {
-                            stalemate = true;
-                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
-                            draw = true;
-                        } else {
+                        if (!isEndOfGame()) {
                             if (canPromote()) {
                                 promotion = true;
                             } else {
@@ -247,13 +241,13 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean isKingInCheck() {
         Piece king = getKing(true);
 
-        if (activePiece.canMove(king.col, king.row)) {
-            checkingPiece = activePiece;
-            return true;
-        } else {
-            checkingPiece = null;
+        for (Piece piece : simPieces) {
+            if (piece.canMove(king.col, king.row)) {
+                checkingPiece = piece;
+                return true;
+            }
         }
-
+        checkingPiece = null;
         return false;
     }
 
@@ -273,6 +267,21 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         return king;
+    }
+
+    private boolean isEndOfGame() {
+        if (isKingInCheck() && isCheckmate()) {
+            gameOver = true;
+            return true;
+        } else if (isStalemate() && !isKingInCheck()) {
+            stalemate = true;
+            return true;
+        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
+            draw = true;
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isCheckmate() {
@@ -653,6 +662,7 @@ public class GamePanel extends JPanel implements Runnable {
                     copyPieces(simPieces, pieces);
                     activePiece = null;
                     promotion = false;
+                    isKingInCheck();
                     changePlayer();
                 }
             }
