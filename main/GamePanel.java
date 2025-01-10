@@ -127,7 +127,7 @@ public class GamePanel extends JPanel implements Runnable {
     private void update() {
         if (promotion) {
             promoting();
-        } else if (!gameOver && !stalemate) {
+        } else if (!gameOver && !stalemate && !draw) {
             if (mouse.pressed) {
                 if (activePiece == null) {
                     // If the activePiece is null, check if you can pick up a piece
@@ -157,13 +157,7 @@ public class GamePanel extends JPanel implements Runnable {
                             castlingPiece.updatePosition();
                         }
 
-                        if (isKingInCheck() && isCheckmate()) {
-                            gameOver = true;
-                        } else if (isStalemate() && !isKingInCheck()) {
-                            stalemate = true;
-                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
-                            draw = true;
-                        } else {
+                        if (!isEndOfGame()) {
                             if (canPromote()) {
                                 promotion = true;
                             } else {
@@ -247,13 +241,13 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean isKingInCheck() {
         Piece king = getKing(true);
 
-        if (activePiece.canMove(king.col, king.row)) {
-            checkingPiece = activePiece;
-            return true;
-        } else {
-            checkingPiece = null;
+        for (Piece piece : simPieces) {
+            if( piece.color != king.color && piece.canMove(king.col, king.row)) {
+                checkingPiece = piece;
+                return true;
+            }
         }
-
+        checkingPiece = null;
         return false;
     }
 
@@ -273,6 +267,21 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         return king;
+    }
+
+    private boolean isEndOfGame() {
+        if (isKingInCheck() && isCheckmate()) {
+            gameOver = true;
+            return true;
+        } else if (isStalemate() && !isKingInCheck()) {
+            stalemate = true;
+            return true;
+        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
+            draw = true;
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isCheckmate() {
@@ -379,6 +388,15 @@ public class GamePanel extends JPanel implements Runnable {
                         }
                     }
                 }
+            } else {
+                // Knight attacking
+                for (Piece piece : simPieces) {
+                    if (piece != king && piece.color != currentColor) {
+                        if(piece.canMove(checkingPiece.col, checkingPiece.row)) {
+                            return false;
+                        }
+                    }
+                }
             }
         }
 
@@ -447,7 +465,7 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        // Ifo nly one piece (the king) is left
+        // Ifo only one piece (the king) is left
         if (count == 1) {
             return !kingCanMove(getKing(true));
         }
@@ -653,6 +671,7 @@ public class GamePanel extends JPanel implements Runnable {
                     copyPieces(simPieces, pieces);
                     activePiece = null;
                     promotion = false;
+                    isKingInCheck();
                     changePlayer();
                 }
             }
