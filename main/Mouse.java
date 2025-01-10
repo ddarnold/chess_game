@@ -5,8 +5,6 @@ import piece.Piece;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import javax.swing.*;
 
 import static main.Constants.*;
 import static main.GamePanel.currentColor;

@@ -7,7 +7,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import static main.Constants.*;
-import static main.Utils.createRoundedButton;
 
 public class GamePanel extends JPanel implements Runnable {
     Thread gameThread;

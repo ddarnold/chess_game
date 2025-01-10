@@ -4,14 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 
 import static main.Constants.*;
-import static main.Utils.*;
 
 public class Settings extends JPanel {
 
-    private Main parentWindow;
-
     public Settings(Main parentWindow) {
-        this.parentWindow = parentWindow;
         setBackground(Color.BLACK);
         setLayout(new BorderLayout());
         String theme = Utils.readJson(PREFERENCES_THEME);
