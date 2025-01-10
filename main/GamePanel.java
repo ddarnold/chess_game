@@ -6,12 +6,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import static main.Constants.*;
-import static main.Utils.createHomeButton;
+import static main.Utils.createRoundedButton;
 
 public class GamePanel extends JPanel implements Runnable {
-    JFrame parentWindow;
     Thread gameThread;
     Board board = new Board();
     Mouse mouse;
@@ -45,15 +43,17 @@ public class GamePanel extends JPanel implements Runnable {
     // COUNTERS
     static int fiftyMoveCounter = 0;
 
-    public GamePanel(JFrame parentWindow) {
-        this.parentWindow = parentWindow;
+    public GamePanel(Main parentWindow) {
         mouse = new Mouse(parentWindow, this);
-        setPreferredSize(new Dimension(LAYOUT_WIDTH, LAYOUT_HEIGHT));
+        setLayout(new BorderLayout());
         setBackground(Color.black);
         addMouseMotionListener(mouse);
         addMouseListener(mouse);
         setPieces();
         copyPieces(pieces, simPieces);
+        currentColor = WHITE;
+        fiftyMoveCounter = 0;
+        Utils.createMenuButton(parentWindow, this);
     }
 
     public void launchGame() {
@@ -64,6 +64,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void setPieces() {
+        pieces.clear();
         // Whites
         pieces.add(new Pawn(WHITE, 0, 6));
         pieces.add(new Pawn(WHITE, 1, 6));
@@ -100,11 +101,6 @@ public class GamePanel extends JPanel implements Runnable {
         pieces.add(new Queen(BLACK, 3, 0));
     }
 
-    void stopGame(){
-        // Set gameThread to null to stop the loop
-        gameThread = null;
-    }
-
     private void copyPieces(ArrayList<Piece> source, ArrayList<Piece> target) {
         target.clear();
         target.addAll(source);
@@ -138,56 +134,58 @@ public class GamePanel extends JPanel implements Runnable {
         if (promotion) {
             promoting();
         } else if (!gameOver && !stalemate) {
-            if (mouse.pressed) {
-                if (activePiece == null) {
-                    // If the activePiece is null, check if you can pick up a piece
-                    for (Piece piece : pieces) {
-                        // If the mouse is on an ally piece, pick it up as the activePiece
-                        int adjustedMouseCol = (mouse.x - MARGIN_X) / Board.SQUARE_SIZE;
-                        int adjustedMouseRow = (mouse.y - MARGIN_Y) / Board.SQUARE_SIZE;
-                        if (piece.color == currentColor && piece.col == adjustedMouseCol && piece.row == adjustedMouseRow) {
-                            activePiece = piece;
-                        }
-                    }
-                } else {
-                    // If the player is holding a piece, simulate the move
-                    simulate();
-                }
-            }
-
-            // Mouse button released
-            if (!mouse.pressed) {
-                if (activePiece != null) {
-                    if (validSquare) {
-                        // MOVE CONFIRMED
-
-                        // Update the piece list in case a piece has been captured and removed during the simulation
-                        copyPieces(simPieces, pieces);
-                        activePiece.updatePosition();
-
-                        if (castlingPiece != null) {
-                            castlingPiece.updatePosition();
-                        }
-
-                        if (isKingInCheck() && isCheckmate()) {
-                            gameOver = true;
-                        } else if (isStalemate() && !isKingInCheck()) {
-                            stalemate = true;
-                        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
-                            draw = true;
-                        } else {
-                            if (canPromote()) {
-                                promotion = true;
-                            } else {
-                                changePlayer();
+            if (mouse != null) {
+                if (mouse.pressed) {
+                    if (activePiece == null) {
+                        // If the activePiece is null, check if you can pick up a piece
+                        for (Piece piece : pieces) {
+                            // If the mouse is on an ally piece, pick it up as the activePiece
+                            int adjustedMouseCol = (mouse.x - MARGIN_X) / Board.SQUARE_SIZE;
+                            int adjustedMouseRow = (mouse.y - MARGIN_Y) / Board.SQUARE_SIZE;
+                            if (piece.color == currentColor && piece.col == adjustedMouseCol && piece.row == adjustedMouseRow) {
+                                activePiece = piece;
                             }
                         }
                     } else {
-                        // The move is not valid so reset everything
-                        copyPieces(pieces, simPieces);
+                        // If the player is holding a piece, simulate the move
+                        simulate();
+                    }
+                }
 
-                        activePiece.resetPosition();
-                        activePiece = null;
+                // Mouse button released
+                if (!mouse.pressed) {
+                    if (activePiece != null) {
+                        if (validSquare) {
+                            // MOVE CONFIRMED
+
+                            // Update the piece list in case a piece has been captured and removed during the simulation
+                            copyPieces(simPieces, pieces);
+                            activePiece.updatePosition();
+
+                            if (castlingPiece != null) {
+                                castlingPiece.updatePosition();
+                            }
+
+                            if (isKingInCheck() && isCheckmate()) {
+                                gameOver = true;
+                            } else if (isStalemate() && !isKingInCheck()) {
+                                stalemate = true;
+                            } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
+                                draw = true;
+                            } else {
+                                if (canPromote()) {
+                                    promotion = true;
+                                } else {
+                                    changePlayer();
+                                }
+                            }
+                        } else {
+                            // The move is not valid so reset everything
+                            copyPieces(pieces, simPieces);
+
+                            activePiece.resetPosition();
+                            activePiece = null;
+                        }
                     }
                 }
             }
@@ -234,7 +232,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private boolean isIllegal(Piece king) {
-        if (king.type == Type.KING) {
+        if (king.type == main.Type.KING) {
             for (Piece piece : simPieces) {
                 if (piece != king && piece.color != king.color && piece.canMove(king.col, king.row)) {
                     return true;
@@ -274,11 +272,11 @@ public class GamePanel extends JPanel implements Runnable {
 
         for (Piece piece : simPieces) {
             if (opponent) {
-                if (piece.type == Type.KING && piece.color != currentColor) {
+                if (piece.type == main.Type.KING && piece.color != currentColor) {
                     king = piece;
                 }
             } else {
-                if (piece.type == Type.KING && piece.color == currentColor) {
+                if (piece.type == main.Type.KING && piece.color == currentColor) {
                     king = piece;
                 }
             }
@@ -420,11 +418,7 @@ public class GamePanel extends JPanel implements Runnable {
         if (isValidMove(king, 0, 1)) {
             return true;
         }
-        if (isValidMove(king, 1, 1)) {
-            return true;
-        }
-
-        return false;
+        return isValidMove(king, 1, 1);
     }
 
     private boolean isValidMove(Piece king, int colPlus, int rowPlus) {
@@ -469,27 +463,19 @@ public class GamePanel extends JPanel implements Runnable {
 
     private boolean isFiftyMovesDraw(Piece activePiece) {
         // reset the 50 moves counter when pawn moves or other piece is taken
-        if (activePiece.type == Type.PAWN || activePiece.hittingPiece != null) {
+        if (activePiece.type == main.Type.PAWN || activePiece.hittingPiece != null) {
             fiftyMoveCounter = -1;
         }
 
         // a draw if no capture has been made and no pawn has been moved in the last fifty moves
-        if (fiftyMoveCounter == 50) {
-            return true;
-        }
-
-        return false;
+        return fiftyMoveCounter == 50;
     }
 
     private boolean isRepetitionDraw() {
         String state = getBoardState();
         boardStates.put(state, boardStates.getOrDefault(state, 0) + 1);
 
-        if (boardStates.get(state) >= 3) {
-            return true;
-        }
-
-        return false;
+        return boardStates.get(state) >= 3;
     }
 
     private boolean isDeadPosition() {
@@ -503,15 +489,15 @@ public class GamePanel extends JPanel implements Runnable {
         int blackKnights = 0;
 
         for (Piece piece : pieces) {
-            if (piece.type == Type.PAWN) {
+            if (piece.type == main.Type.PAWN) {
                 return false; // Pawns mean there is still potential for checkmate
             }
 
-            if (piece.type == Type.QUEEN || piece.type == Type.ROOK) {
+            if (piece.type == main.Type.QUEEN || piece.type == main.Type.ROOK) {
                 return false; // Queens and rooks can checkmate
             }
 
-            if (piece.type == Type.BISHOP) {
+            if (piece.type == main.Type.BISHOP) {
                 if (piece.color == WHITE) {
                     whiteMaterial++;
                     whiteHasBishop = true;
@@ -521,7 +507,7 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
 
-            if (piece.type == Type.KNIGHT) {
+            if (piece.type == main.Type.KNIGHT) {
                 if (piece.color == WHITE) {
                     whiteMaterial++;
                     whiteKnights++;
@@ -553,11 +539,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         // King and 2 Knights vs King (or King vs King and 2 Knights)
-        if (pieces.size() == 4 && (whiteKnights == 2 && blackMaterial == 0 || blackKnights == 2 && whiteMaterial == 0)) {
-            return true;
-        }
-
-        return false;
+        return pieces.size() == 4 && (whiteKnights == 2 && blackMaterial == 0 || blackKnights == 2 && whiteMaterial == 0);
     }
 
 
@@ -566,7 +548,7 @@ public class GamePanel extends JPanel implements Runnable {
         boolean blackBishopOnWhiteSquare = false;
 
         for (Piece piece : pieces) {
-            if (piece.type == Type.BISHOP) {
+            if (piece.type == main.Type.BISHOP) {
                 int squareColor = (piece.col + piece.row) % 2;
                 if (piece.color == WHITE) {
                     whiteBishopOnWhiteSquare = (squareColor == 0);
@@ -627,7 +609,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private boolean canPromote() {
-        if (activePiece.type == Type.PAWN) {
+        if (activePiece.type == main.Type.PAWN) {
             if (currentColor == WHITE && activePiece.row == 0 || currentColor == BLACK && activePiece.row == 7) {
                 promoPieces.clear();
                 promoPieces.add(new Rook(currentColor, 9, 2));
@@ -683,24 +665,24 @@ public class GamePanel extends JPanel implements Runnable {
         for (Piece piece : pieces) {
             piece.draw(g2d);
         }
-        int BUTTON_WIDTH = 200;
-        int BUTTON_HEIGHT = 50;
-
-        // Button position
-        int buttonX = LAYOUT_WIDTH - BUTTON_WIDTH - 10;
-        int buttonY = LAYOUT_HEIGHT - BUTTON_HEIGHT - 40;
-        g2d.setFont(Utils.deriveFont(25, Font.PLAIN));
-        // Set color and draw filled rounded rectangle
-        g2d.setColor(Color.DARK_GRAY);
-        g2d.fillRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 20, 20);
-
-        // Draw the text centered on the button
-        g2d.setColor(Color.WHITE);
-        String buttonText = "Home";
-        FontMetrics metrics = g2d.getFontMetrics();
-        int textX = buttonX + (BUTTON_WIDTH - metrics.stringWidth(buttonText)) / 2;
-        int textY = buttonY + ((BUTTON_HEIGHT - metrics.getHeight()) / 2) + metrics.getAscent();
-        g2d.drawString(buttonText, textX, textY);
+//        int BUTTON_WIDTH = 100;
+//        int BUTTON_HEIGHT = 60;
+//
+//        // Button position
+//        int buttonX = LAYOUT_WIDTH - BUTTON_WIDTH - 10;
+//        int buttonY = LAYOUT_HEIGHT - BUTTON_HEIGHT - 40;
+//        g2d.setFont(Utils.deriveFont(25, Font.PLAIN));
+//        // Set color and draw filled rounded rectangle
+//        g2d.setColor(Color.DARK_GRAY);
+//        g2d.fillRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 40, 40);
+//
+//        // Draw the text centered on the button
+//        g2d.setColor(Color.WHITE);
+//        String buttonText = "Menu";
+//        FontMetrics metrics = g2d.getFontMetrics();
+//        int textX = buttonX + (BUTTON_WIDTH - metrics.stringWidth(buttonText)) / 2;
+//        int textY = buttonY + ((BUTTON_HEIGHT - metrics.getHeight()) / 2) + metrics.getAscent();
+//        g2d.drawString(buttonText, textX, textY);
 
         g2d.setFont(Utils.deriveFont(40, Font.PLAIN));
         g2d.setColor(Color.white);
@@ -711,7 +693,7 @@ public class GamePanel extends JPanel implements Runnable {
         //Print the horizontal letters
         String[] letters = {"A", "B", "C", "D", "E", "F", "G", "H"};
         for (int i = 0; i < 8; i++) {
-            g2d.drawString(letters[i], Board.SQUARE_SIZE/2 - 15 + MARGIN_X + Board.SQUARE_SIZE * i, MARGIN_Y-15);
+            g2d.drawString(letters[i], Board.SQUARE_SIZE / 2 - 15 + MARGIN_X + Board.SQUARE_SIZE * i, MARGIN_Y - 15);
         }
 
         if (activePiece != null) {
@@ -733,7 +715,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         if (gameOver) {
-            String s = "";
+            String s;
             if (currentColor == WHITE) {
                 s = "White wins";
             } else {
@@ -751,24 +733,24 @@ public class GamePanel extends JPanel implements Runnable {
             g2d.setColor(Color.WHITE);
 
             if (promotion) {
-                g2d.drawString("Promote to:", 840, 150);
+                g2d.drawString("Promote to:", 900, 150);
                 for (Piece piece : promoPieces) {
                     g2d.drawImage(piece.image, piece.getX(piece.col), piece.getY(piece.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
                 }
             } else {
                 if (currentColor == WHITE) {
-                    g2d.drawString("White's turn", 840, 550);
+                    g2d.drawString("White's turn", 900, 550);
                     if (checkingPiece != null && checkingPiece.color == BLACK) {
                         g2d.setColor(Color.red);
-                        g2d.drawString("The King", 840, 650);
-                        g2d.drawString("is in check!", 840, 700);
+                        g2d.drawString("The King", 900, 650);
+                        g2d.drawString("is in check!", 900, 700);
                     }
                 } else {
-                    g2d.drawString("Black's turn", 840, 250);
+                    g2d.drawString("Black's turn", 900, 250);
                     if (checkingPiece != null && checkingPiece.color == WHITE) {
                         g2d.setColor(Color.red);
-                        g2d.drawString("The King", 840, 100);
-                        g2d.drawString("is in check!", 840, 150);
+                        g2d.drawString("The King", 900, 100);
+                        g2d.drawString("is in check!", 900, 150);
                     }
                 }
             }

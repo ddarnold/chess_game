@@ -5,19 +5,15 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Objects;
-
-import static main.Constants.LAYOUT_HEIGHT;
-import static main.Constants.LAYOUT_WIDTH;
 import static main.Utils.createRoundedButton;
 
 public class Menu extends JPanel {
-    private final JFrame parentWindow;
+    private final Main parentWindow;
     private BufferedImage backgroundImage;
-    private GamePanel gamePanel;
 
-    public Menu(JFrame parentWindow) {
+    public Menu(Main parentWindow) {
         this.parentWindow = parentWindow;
-        setPreferredSize(new Dimension(LAYOUT_WIDTH, LAYOUT_HEIGHT));
+        parentWindow.setCursor(Cursor.getDefaultCursor());
         try {
             backgroundImage = javax.imageio.ImageIO.read(Objects.requireNonNull(
                     getClass().getResource("/res/image/chess_bg.jpg")));
@@ -31,14 +27,14 @@ public class Menu extends JPanel {
         title.setFont(Utils.deriveFont(100, Font.BOLD));
         title.setForeground(Color.white);
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        title.setBorder(BorderFactory.createEmptyBorder(200, 100, 0, 650)); // Top, left, bottom, right
+        title.setBorder(BorderFactory.createEmptyBorder(200, 100, 0, 750)); // Top, left, bottom, right
         add(title, BorderLayout.NORTH);
 
         // Buttons Panel with Margins
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(3, 1, 10, 10)); // 3 buttons, no gaps
         buttonPanel.setOpaque(false);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 100, 200, 650)); // Add margins around the buttons
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 100, 200, 750)); // Add margins around the buttons
 
         // Create buttons
         RoundedButton playButton = createRoundedButton("Play");
@@ -58,33 +54,15 @@ public class Menu extends JPanel {
     }
 
     private void startGame() {
-        // Stop any existing game if necessary
-        if (gamePanel != null) {
-            //gamePanel.stopGame();
-            gamePanel = null;
-            parentWindow.getContentPane().removeAll();
-        }
 
-        // Create a new game panel and add it to the parent window
-        gamePanel = new GamePanel(parentWindow);
-        Header header = new Header(parentWindow);
-        parentWindow.add(header, BorderLayout.NORTH);
-        parentWindow.add(gamePanel);
-        parentWindow.revalidate();
-        parentWindow.repaint();
-
-        // Start the game loop
+        GamePanel gamePanel = new GamePanel(parentWindow);
+        parentWindow.switchToPanel(gamePanel);
         gamePanel.launchGame();
+
     }
 
     private void showSettings() {
-        parentWindow.getContentPane().removeAll();
-        Settings settings = new Settings(parentWindow);
-        Header header = new Header(parentWindow);
-        parentWindow.add(header, BorderLayout.NORTH);
-        parentWindow.add(settings);
-        parentWindow.revalidate();
-        parentWindow.repaint();
+        parentWindow.switchToPanel(new Settings(parentWindow));
     }
 
     @Override
@@ -92,7 +70,6 @@ public class Menu extends JPanel {
         super.paintComponent(g);
         if (backgroundImage != null) {
             Graphics2D g2d = (Graphics2D) g.create();
-
 
 
             // Calculate aspect ratio

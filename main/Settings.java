@@ -7,17 +7,14 @@ import static main.Constants.*;
 import static main.Utils.*;
 
 public class Settings extends JPanel {
-    private final JFrame parentWindow;
-    private final String theme;
 
-    public Settings(JFrame parentWindow) {
+    private Main parentWindow;
+
+    public Settings(Main parentWindow) {
         this.parentWindow = parentWindow;
-        setPreferredSize(new Dimension(LAYOUT_WIDTH, LAYOUT_HEIGHT));
         setBackground(Color.BLACK);
         setLayout(new BorderLayout());
-        theme = Utils.readJson(PREFERENCES_THEME);
-        Graphics g = parentWindow.getGraphics();
-        Graphics2D g2d = (Graphics2D) g;
+        String theme = Utils.readJson(PREFERENCES_THEME);
 
         // Title with Margin
         JLabel title = new JLabel("Settings");
@@ -29,6 +26,13 @@ public class Settings extends JPanel {
 
         // Dropdown for theme selection
         String[] themes = {GREEN_THEME_TEXT, BROWN_THEME_TEXT};
+        JPanel dropdownPanel = getDropdownPanel(themes, theme);
+        add(dropdownPanel, BorderLayout.CENTER);
+
+        Utils.createMenuButton(parentWindow, this);
+    }
+
+    private static JPanel getDropdownPanel(String[] themes, String theme) {
         JComboBox<String> themeSelector = new JComboBox<>(themes);
 
         // Set the current theme as the default selection
@@ -42,7 +46,7 @@ public class Settings extends JPanel {
                 Utils.applyTheme(GREEN_THEME);
                 Utils.writeJson(PREFERENCES_THEME, GREEN_THEME);
             } else if (BROWN_THEME_TEXT.equals(selectedTheme)) {
-                //Utils.applyTheme(parentWindow, "Dark");
+                Utils.applyTheme(BROWN_THEME);
                 Utils.writeJson(PREFERENCES_THEME, BROWN_THEME);
             }
         });
@@ -50,29 +54,8 @@ public class Settings extends JPanel {
         // Add the dropdown to the panel
         JPanel dropdownPanel = new JPanel();
         dropdownPanel.setBackground(Color.BLACK);
-        dropdownPanel.setBorder(BorderFactory.createEmptyBorder(50, 100, 50, 650));
+        dropdownPanel.setBorder(BorderFactory.createEmptyBorder(50, 0, 0, 650));
         dropdownPanel.add(themeSelector);
-        add(dropdownPanel, BorderLayout.CENTER);
-
-
-        int BUTTON_WIDTH = 200;
-        int BUTTON_HEIGHT = 50;
-
-        // Button position
-        int buttonX = LAYOUT_WIDTH - BUTTON_WIDTH - 10;
-        int buttonY = LAYOUT_HEIGHT - BUTTON_HEIGHT - 40;
-        g2d.setFont(Utils.deriveFont(25, Font.PLAIN));
-        // Set color and draw filled rounded rectangle
-        g2d.setColor(Color.DARK_GRAY);
-        g2d.fillRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 20, 20);
-
-        // Draw the text centered on the button
-        g2d.setColor(Color.WHITE);
-        String buttonText = "Home";
-        FontMetrics metrics = g2d.getFontMetrics();
-        int textX = buttonX + (BUTTON_WIDTH - metrics.stringWidth(buttonText)) / 2;
-        int textY = buttonY + ((BUTTON_HEIGHT - metrics.getHeight()) / 2) + metrics.getAscent();
-        g2d.drawString(buttonText, textX, textY);
+        return dropdownPanel;
     }
-
 }

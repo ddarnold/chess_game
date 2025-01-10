@@ -17,21 +17,29 @@ public class Utils {
     private static Font baseFont;
     private static Color lightColor, darkColor;
 
-    static Font loadCustomFont(String path, float size) {
+    static void loadAndSetCustomFont() {
         try {
             // Load the base font only once
             if (baseFont == null) {
-                InputStream is = Utils.class.getResourceAsStream(path);
+                InputStream is = Utils.class.getResourceAsStream("/res/font/vidaloka.ttf");
                 if (is == null) {
-                    throw new IOException("Font file not found: " + path);
+                    throw new IOException("Font file not found: " + "/res/font/vidaloka.ttf");
                 }
                 baseFont = Font.createFont(Font.TRUETYPE_FONT, is);
                 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                 ge.registerFont(baseFont); // Register the font
             }
-            return baseFont.deriveFont(size); // Create a derived font with the given size
-        } catch (FontFormatException | IOException e) {
-            return new Font("Serif", Font.PLAIN, 24); // Fallback font
+            Font font = baseFont.deriveFont((float) 24.0);
+
+            UIManager.put("Label.font", font);
+            UIManager.put("Button.font", font);
+            UIManager.put("TextField.font", font);
+            UIManager.put("TextArea.font", font);
+            UIManager.put("ComboBox.font", font);
+            UIManager.put("CheckBox.font", font);
+            UIManager.put("RadioButton.font", font);
+
+        } catch (FontFormatException | IOException ignored) {
         }
     }
 
@@ -97,36 +105,17 @@ public class Utils {
         return button;
     }
 
-    static void returnToHome(JFrame parentWindow, GamePanel gamePanel) {
-        if (gamePanel != null) {
-            gamePanel.stopGame();
-        }
-
-        parentWindow.getContentPane().removeAll();
-
-        Menu menu = new Menu(parentWindow);
-        Header header = new Header(parentWindow);
-        parentWindow.add(header, BorderLayout.NORTH);
-        parentWindow.add(menu);
-
-        parentWindow.revalidate();
-        parentWindow.repaint();
-    }
-
-
-    static void createHomeButton(JFrame parentWindow) {
-        // Add Home button to the bottom-right
-        RoundedButton homeButton = createRoundedButton("Home");
-        homeButton.addActionListener(e -> returnToHome(parentWindow, null)); // Action for the button
-        homeButton.setPreferredSize(new Dimension(200, 50)); // Fixed size for the button
-        homeButton.setMargin(new Insets(0, 0, 20, 20));
-
-        // Panel for the button to position it at bottom-right
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(Color.BLACK); // Make the panel's background match
+    public static void createMenuButton(Main parentWindow, JPanel mainPanel) {
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.BLACK);
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        RoundedButton homeButton = createRoundedButton("Menu");
+        homeButton.setMinimumSize(new Dimension(200, 50));
+        homeButton.addActionListener(e ->
+                parentWindow.switchToPanel(new Menu(parentWindow))
+        );
         buttonPanel.add(homeButton);
-
-        parentWindow.add(buttonPanel, BorderLayout.SOUTH); // Add panel to the bottom
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
 
 }
