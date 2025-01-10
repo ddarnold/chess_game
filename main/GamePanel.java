@@ -167,13 +167,7 @@ public class GamePanel extends JPanel implements Runnable {
                                 castlingPiece.updatePosition();
                             }
 
-                            if (isKingInCheck() && isCheckmate()) {
-                                gameOver = true;
-                            } else if (isStalemate() && !isKingInCheck()) {
-                                stalemate = true;
-                            } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
-                                draw = true;
-                            } else {
+                            if (!isEndOfGame()) {
                                 if (canPromote()) {
                                     promotion = true;
                                 } else {
@@ -186,6 +180,7 @@ public class GamePanel extends JPanel implements Runnable {
 
                             activePiece.resetPosition();
                             activePiece = null;
+
                         }
                     }
                 }
@@ -258,13 +253,13 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean isKingInCheck() {
         Piece king = getKing(true);
 
-        if (activePiece.canMove(king.col, king.row)) {
-            checkingPiece = activePiece;
-            return true;
-        } else {
-            checkingPiece = null;
+        for (Piece piece : simPieces) {
+            if( piece.color != king.color && piece.canMove(king.col, king.row)) {
+                checkingPiece = piece;
+                return true;
+            }
         }
-
+        checkingPiece = null;
         return false;
     }
 
@@ -284,6 +279,21 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         return king;
+    }
+
+    private boolean isEndOfGame() {
+        if (isKingInCheck() && isCheckmate()) {
+            gameOver = true;
+            return true;
+        } else if (isStalemate() && !isKingInCheck()) {
+            stalemate = true;
+            return true;
+        } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
+            draw = true;
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isCheckmate() {
@@ -390,6 +400,15 @@ public class GamePanel extends JPanel implements Runnable {
                         }
                     }
                 }
+            } else {
+                // Knight attacking
+                for (Piece piece : simPieces) {
+                    if (piece != king && piece.color != currentColor) {
+                        if(piece.canMove(checkingPiece.col, checkingPiece.row)) {
+                            return false;
+                        }
+                    }
+                }
             }
         }
 
@@ -454,7 +473,7 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        // Ifo nly one piece (the king) is left
+        // If only one piece (the king) is left
         if (count == 1) {
             return !kingCanMove(getKing(true));
         }
@@ -540,7 +559,11 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         // King and 2 Knights vs King (or King vs King and 2 Knights)
-        return pieces.size() == 4 && (whiteKnights == 2 && blackMaterial == 0 || blackKnights == 2 && whiteMaterial == 0);
+        if (pieces.size() == 4 && (whiteKnights == 2 && blackMaterial == 0 || blackKnights == 2 && whiteMaterial == 0)) {
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -648,6 +671,7 @@ public class GamePanel extends JPanel implements Runnable {
                     copyPieces(simPieces, pieces);
                     activePiece = null;
                     promotion = false;
+                    isKingInCheck();
                     changePlayer();
                 }
             }
@@ -666,24 +690,6 @@ public class GamePanel extends JPanel implements Runnable {
         for (Piece piece : pieces) {
             piece.draw(g2d);
         }
-//        int BUTTON_WIDTH = 100;
-//        int BUTTON_HEIGHT = 60;
-//
-//        // Button position
-//        int buttonX = LAYOUT_WIDTH - BUTTON_WIDTH - 10;
-//        int buttonY = LAYOUT_HEIGHT - BUTTON_HEIGHT - 40;
-//        g2d.setFont(Utils.deriveFont(25, Font.PLAIN));
-//        // Set color and draw filled rounded rectangle
-//        g2d.setColor(Color.DARK_GRAY);
-//        g2d.fillRoundRect(buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, 40, 40);
-//
-//        // Draw the text centered on the button
-//        g2d.setColor(Color.WHITE);
-//        String buttonText = "Menu";
-//        FontMetrics metrics = g2d.getFontMetrics();
-//        int textX = buttonX + (BUTTON_WIDTH - metrics.stringWidth(buttonText)) / 2;
-//        int textY = buttonY + ((BUTTON_HEIGHT - metrics.getHeight()) / 2) + metrics.getAscent();
-//        g2d.drawString(buttonText, textX, textY);
 
         g2d.setFont(Utils.deriveFont(40, Font.PLAIN));
         g2d.setColor(Color.white);
