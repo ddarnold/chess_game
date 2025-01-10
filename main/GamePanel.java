@@ -6,12 +6,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import static main.Constants.*;
+
+import static main.Constants.MARGIN_X;
+import static main.Constants.MARGIN_Y;
 
 public class GamePanel extends JPanel implements Runnable {
     Thread gameThread;
     Board board = new Board();
     Mouse mouse;
+    private final AI ai;
 
     private final HashMap<String, Integer> boardStates = new HashMap<>();
 
@@ -22,6 +25,7 @@ public class GamePanel extends JPanel implements Runnable {
     public static final int WHITE = 1;
     public static final int BLACK = 0;
     public static int currentColor = WHITE;
+    public static int aiColor;
 
 
     // PIECES
@@ -43,9 +47,15 @@ public class GamePanel extends JPanel implements Runnable {
     // COUNTERS
     static int fiftyMoveCounter = 0;
 
-    public GamePanel(Main parentWindow, boolean isAi) {
+    public GamePanel(Main parentWindow, boolean isAi, int colorAI) {
         mouse = new Mouse(parentWindow, this);
         this.isAi = isAi;
+        if (isAi) {
+            aiColor = colorAI;
+            ai = new AI(pieces);
+        } else {
+            ai = null;
+        }
         setLayout(new BorderLayout());
         setBackground(Color.black);
         addMouseMotionListener(mouse);
@@ -135,58 +145,113 @@ public class GamePanel extends JPanel implements Runnable {
         if (promotion) {
             promoting();
         } else if (!gameOver && !stalemate) {
-            if (mouse != null) {
-                if (mouse.pressed) {
-                    if (activePiece == null) {
-                        // If the activePiece is null, check if you can pick up a piece
-                        for (Piece piece : pieces) {
-                            // If the mouse is on an ally piece, pick it up as the activePiece
-                            int adjustedMouseCol = (mouse.x - MARGIN_X) / Board.SQUARE_SIZE;
-                            int adjustedMouseRow = (mouse.y - MARGIN_Y) / Board.SQUARE_SIZE;
-                            if (piece.color == currentColor && piece.col == adjustedMouseCol && piece.row == adjustedMouseRow) {
-                                activePiece = piece;
+            if (currentColor == aiColor && isAi) {
+                executeAIMove();
+            } else {
+                handlePlayerMove();
+            }
+        }
+    }
+
+    private void executeAIMove() {
+        int[] move = ai.getNextMove(aiColor);
+        if (move != null) {
+            Piece piece = getPieceAt(move[0], move[1]);
+            if (piece != null) {
+                Piece targetPiece = getPieceAt(move[2], move[3]);
+
+                // Remove the captured piece
+                if (targetPiece != null && targetPiece.color != aiColor) {
+                    pieces.remove(targetPiece);
+                }
+
+                // Move the AI's piece
+                piece.col = move[2];
+                piece.row = move[3];
+                piece.updatePosition();
+
+                // Check for promotion
+                if (piece.type == Type.PAWN && (piece.row == 0 || piece.row == 7)) {
+                    promotePawn(piece);
+                } else {
+                    piece.updatePosition();
+                }
+
+                // Switch the turn to the player
+                changePlayer();
+            }
+        } else {
+            gameOver = true; // Stalemate or checkmate
+        }
+    }
+
+
+    private void promotePawn(Piece pawn) {
+        // Replace the pawn with a queen
+        pieces.remove(pawn);
+        pieces.add(new Queen(aiColor, pawn.col, pawn.row));
+    }
+
+    private Piece getPieceAt(int col, int row) {
+        for (Piece piece : pieces) {
+            if (piece.col == col && piece.row == row) {
+                return piece;
+            }
+        }
+        return null;
+    }
+
+    private void handlePlayerMove() {
+        if (mouse != null) {
+            if (mouse.pressed) {
+                if (activePiece == null) {
+                    // If the activePiece is null, check if you can pick up a piece
+                    for (Piece piece : pieces) {
+                        // If the mouse is on an ally piece, pick it up as the activePiece
+                        int adjustedMouseCol = (mouse.x - MARGIN_X) / Board.SQUARE_SIZE;
+                        int adjustedMouseRow = (mouse.y - MARGIN_Y) / Board.SQUARE_SIZE;
+                        if (piece.color == currentColor && piece.col == adjustedMouseCol && piece.row == adjustedMouseRow) {
+                            activePiece = piece;
+                        }
+                    }
+                } else {
+                    // If the player is holding a piece, simulate the move
+                    simulate();
+                }
+            }
+
+            // Mouse button released
+            if (!mouse.pressed) {
+                if (activePiece != null) {
+                    if (validSquare) {
+                        // MOVE CONFIRMED
+
+                        // Update the piece list in case a piece has been captured and removed during the simulation
+                        copyPieces(simPieces, pieces);
+                        activePiece.updatePosition();
+
+                        if (castlingPiece != null) {
+                            castlingPiece.updatePosition();
+                        }
+
+                        if (!isEndOfGame()) {
+                            if (canPromote()) {
+                                promotion = true;
+                            } else {
+                                changePlayer();
                             }
                         }
                     } else {
-                        // If the player is holding a piece, simulate the move
-                        simulate();
-                    }
-                }
+                        // The move is not valid so reset everything
+                        copyPieces(pieces, simPieces);
 
-                // Mouse button released
-                if (!mouse.pressed) {
-                    if (activePiece != null) {
-                        if (validSquare) {
-                            // MOVE CONFIRMED
+                        activePiece.resetPosition();
+                        activePiece = null;
 
-                            // Update the piece list in case a piece has been captured and removed during the simulation
-                            copyPieces(simPieces, pieces);
-                            activePiece.updatePosition();
-
-                            if (castlingPiece != null) {
-                                castlingPiece.updatePosition();
-                            }
-
-                            if (!isEndOfGame()) {
-                                if (canPromote()) {
-                                    promotion = true;
-                                } else {
-                                    changePlayer();
-                                }
-                            }
-                        } else {
-                            // The move is not valid so reset everything
-                            copyPieces(pieces, simPieces);
-
-                            activePiece.resetPosition();
-                            activePiece = null;
-
-                        }
                     }
                 }
             }
         }
-
     }
 
     private void simulate() {
@@ -254,7 +319,7 @@ public class GamePanel extends JPanel implements Runnable {
         Piece king = getKing(true);
 
         for (Piece piece : simPieces) {
-            if( piece.color != king.color && piece.canMove(king.col, king.row)) {
+            if (piece.color != king.color && piece.canMove(king.col, king.row)) {
                 checkingPiece = piece;
                 return true;
             }
@@ -404,7 +469,7 @@ public class GamePanel extends JPanel implements Runnable {
                 // Knight attacking
                 for (Piece piece : simPieces) {
                     if (piece != king && piece.color != currentColor) {
-                        if(piece.canMove(checkingPiece.col, checkingPiece.row)) {
+                        if (piece.canMove(checkingPiece.col, checkingPiece.row)) {
                             return false;
                         }
                     }
