@@ -32,7 +32,7 @@ public class Main extends JFrame {
     public static void main(String[] args) {
 
         Utils.loadAndSetCustomFont();
-        Utils.applyTheme(Objects.requireNonNull(Utils.readJson(PREFERENCES_THEME)));
+        Utils.applyTheme(Objects.requireNonNull(JsonHandler.readJson(PREFERENCES_THEME)));
 
         SwingUtilities.invokeLater(() -> new Main().setVisible(true));
 

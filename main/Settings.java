@@ -10,7 +10,7 @@ public class Settings extends JPanel {
     public Settings(Main parentWindow) {
         setBackground(Color.BLACK);
         setLayout(new BorderLayout());
-        String theme = Utils.readJson(PREFERENCES_THEME);
+        String theme = JsonHandler.readJson(PREFERENCES_THEME);
 
         // Title with Margin
         JLabel title = new JLabel("Settings");
@@ -40,10 +40,10 @@ public class Settings extends JPanel {
             String selectedTheme = (String) themeSelector.getSelectedItem();
             if (GREEN_THEME_TEXT.equals(selectedTheme)) {
                 Utils.applyTheme(GREEN_THEME);
-                Utils.writeJson(PREFERENCES_THEME, GREEN_THEME);
+                JsonHandler.writeJson(PREFERENCES_THEME, GREEN_THEME);
             } else if (BROWN_THEME_TEXT.equals(selectedTheme)) {
                 Utils.applyTheme(BROWN_THEME);
-                Utils.writeJson(PREFERENCES_THEME, BROWN_THEME);
+                JsonHandler.writeJson(PREFERENCES_THEME, BROWN_THEME);
             }
         });
 
