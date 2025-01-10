@@ -32,20 +32,23 @@ public class Menu extends JPanel {
 
         // Buttons Panel with Margins
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(3, 1, 10, 10)); // 3 buttons, no gaps
+        buttonPanel.setLayout(new GridLayout(4, 1, 10, 10)); // 3 buttons, no gaps
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 100, 200, 750)); // Add margins around the buttons
 
         // Create buttons
-        RoundedButton playButton = createRoundedButton("Play");
+        RoundedButton playWithAiButton = createRoundedButton("Play vs AI");
+        RoundedButton playWithAPButton = createRoundedButton("Play vs Human");
         JButton settingsButton = createRoundedButton("Settings");
         JButton exitButton = createRoundedButton("Exit");
-        playButton.addActionListener(e -> startGame());
+        playWithAiButton.addActionListener(e -> startGame(true));
+        playWithAPButton.addActionListener(e -> startGame(false));
         settingsButton.addActionListener(e -> showSettings());
         exitButton.addActionListener(e -> System.exit(0));
 
         // Add buttons to panel
-        buttonPanel.add(playButton);
+        buttonPanel.add(playWithAiButton);
+        buttonPanel.add(playWithAPButton);
         buttonPanel.add(settingsButton);
         buttonPanel.add(exitButton);
 
@@ -53,9 +56,9 @@ public class Menu extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private void startGame() {
+    private void startGame(boolean isAi) {
 
-        GamePanel gamePanel = new GamePanel(parentWindow);
+        GamePanel gamePanel = new GamePanel(parentWindow, isAi);
         parentWindow.switchToPanel(gamePanel);
         gamePanel.launchGame();
 

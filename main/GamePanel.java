@@ -38,12 +38,14 @@ public class GamePanel extends JPanel implements Runnable {
     boolean gameOver;
     boolean stalemate;
     boolean draw;
+    boolean isAi;
 
     // COUNTERS
     static int fiftyMoveCounter = 0;
 
-    public GamePanel(Main parentWindow) {
+    public GamePanel(Main parentWindow, boolean isAi) {
         mouse = new Mouse(parentWindow, this);
+        this.isAi = isAi;
         setLayout(new BorderLayout());
         setBackground(Color.black);
         addMouseMotionListener(mouse);
