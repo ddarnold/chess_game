@@ -1,21 +1,18 @@
 package main;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import javax.swing.*;
 import java.awt.*;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static main.Constants.*;
+import static main.Constants.BROWN_THEME;
+import static main.Constants.GREEN_THEME;
 
 public class Utils {
 
     private static Font baseFont;
     private static Color lightColor, darkColor;
+
 
     static void loadAndSetCustomFont() {
         try {
@@ -48,33 +45,6 @@ public class Utils {
             return baseFont.deriveFont(style, size); // Create a derived font with custom size and style
         }
         return new Font("Serif", style, (int) size); // Fallback
-    }
-
-    static String readJson(String key) {
-        try (FileReader reader = new FileReader(PREFERENCES_PATH)) {
-            // Parse the JSON and fetch the value for the specified key
-            JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
-            return jsonObject.has(key) ? jsonObject.get(key).getAsString() : null;
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading the JSON file", e);
-        }
-    }
-
-    static void writeJson(String key, String value) {
-        try (FileReader reader = new FileReader(PREFERENCES_PATH)) {
-            // Parse the JSON into an object
-            JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
-
-            // Update the value
-            jsonObject.addProperty(key, value);
-
-            // Write the updated JSON back to the file
-            try (FileWriter writer = new FileWriter(PREFERENCES_PATH)) {
-                writer.write(jsonObject.toString());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error updating the JSON file", e);
-        }
     }
 
     static void applyTheme(String theme) {
