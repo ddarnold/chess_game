@@ -41,8 +41,8 @@ public class Menu extends JPanel {
         RoundedButton playWithAPButton = createRoundedButton("Play vs Human");
         JButton settingsButton = createRoundedButton("Settings");
         JButton exitButton = createRoundedButton("Exit");
-        playWithAiButton.addActionListener(e -> startGame(true));
-        playWithAPButton.addActionListener(e -> startGame(false));
+        playWithAiButton.addActionListener(e -> startGame(true, GamePanel.BLACK));
+        playWithAPButton.addActionListener(e -> startGame(false, GamePanel.BLACK));
         settingsButton.addActionListener(e -> showSettings());
         exitButton.addActionListener(e -> System.exit(0));
 
@@ -56,9 +56,9 @@ public class Menu extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private void startGame(boolean isAi) {
+    private void startGame(boolean isAi, int colorAi) {
 
-        GamePanel gamePanel = new GamePanel(parentWindow, isAi);
+        GamePanel gamePanel = new GamePanel(parentWindow, isAi, colorAi);
         parentWindow.switchToPanel(gamePanel);
         gamePanel.launchGame();
 
