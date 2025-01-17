@@ -43,6 +43,25 @@ public class GamePanel extends JPanel implements Runnable {
     boolean validSquare;
 
     // CONSTRUCTOR
+    public GamePanel(Main parentWindow, GameType selectedGameType, Object connection) {
+        this.connection = connection;
+
+        this.mouse = new Mouse(parentWindow, this);
+
+        // Graphics and game state
+        initializeUI(parentWindow);
+        initializeGameState();
+
+        // Different Multiplayer Game Modes
+        if (selectedGameType == GameType.MULTIPLAYER_AS_CLIENT) {
+            opponentColor = WHITE;
+            isMultiplayer = true;
+        } else if (selectedGameType == GameType.MULTIPLAYER_AS_HOST_WHITE) {
+            opponentColor = BLACK;
+            isMultiplayer = true;
+        } else  throw new IllegalArgumentException();
+    }
+
     public GamePanel(Main parentWindow, GameType selectedGameType) {
         this.mouse = new Mouse(parentWindow, this);
 
@@ -59,21 +78,8 @@ public class GamePanel extends JPanel implements Runnable {
             this.isAi = true;
             this.ai = new AI(pieces);
             opponentColor = BLACK;
-        } else if (selectedGameType == GameType.MULTIPLAYER_AS_CLIENT) {
-            connection = new GameClient();
-            ((GameClient) connection).connectToServer(); // Replace with server IP
-            opponentColor = BLACK; // TODO: will be changed
-            isMultiplayer = true;
-        } else if (selectedGameType == GameType.MULTIPLAYER_AS_HOST_WHITE) {
-            connection = new GameServer();
-            ((GameServer) connection).startServer(); // Use a fixed or configurable port
-            opponentColor = WHITE; // TODO: will be changed
-            isMultiplayer = true;
         }
-        // TODO: these cases
-//        else if (selectedGameType == GameType.MULTIPLAYER_AS_HOST_BLACK) {
-//
-//        } else if (selectedGameType == GameType.LOCAL_2_PLAYER) {
+//         else if (selectedGameType == GameType.LOCAL_2_PLAYER) {
 //
 //        }
     }

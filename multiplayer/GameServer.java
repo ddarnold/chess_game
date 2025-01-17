@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.InetSocketAddress;
 
 public class GameServer {
     private ServerSocket serverSocket;
@@ -15,7 +16,9 @@ public class GameServer {
 
     public void startServer(int port){
         try {
-            serverSocket = new ServerSocket(port);
+            ServerSocket serverSocket = new ServerSocket();
+            serverSocket.setReuseAddress(true);
+            serverSocket.bind(new InetSocketAddress(port));
             System.out.println("Server started. Waiting for a client...");
             clientSocket = serverSocket.accept();
             System.out.println("Client connected.");
@@ -23,13 +26,16 @@ public class GameServer {
             input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             output = new PrintWriter(clientSocket.getOutputStream(), true);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error starting server: " + e.getMessage());
+            stopServer(); // Ensure partial resources are released.
         }
     }
 
     public void startServer() {
         try {
-            serverSocket = new ServerSocket(Constants.PORT);
+            ServerSocket serverSocket = new ServerSocket();
+            serverSocket.setReuseAddress(true);
+            serverSocket.bind(new InetSocketAddress(Constants.PORT));
             System.out.println("Server started. Waiting for a client...");
             clientSocket = serverSocket.accept();
             System.out.println("Client connected.");
@@ -37,31 +43,58 @@ public class GameServer {
             input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             output = new PrintWriter(clientSocket.getOutputStream(), true);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error starting server: " + e.getMessage());
+            stopServer(); // Ensure partial resources are released.
         }
 
     }
 
     public void sendMessage(String message) {
-        output.println(message);
+        if (output != null) {
+            output.println(message);
+        }
     }
 
     public String receiveMessage(){
         try {
             return input.readLine();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error reading message: " + e.getMessage());
         }
+        return null;
     }
 
-    public void stopServer(){
+    public void stopServer() {
         try {
-            input.close();
-            output.close();
-            clientSocket.close();
-            serverSocket.close();
+            if (input != null) {
+                input.close();
+            }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error closing input: " + e.getMessage());
+        }
+
+        try {
+            if (output != null) {
+                output.close();
+            }
+        } catch (Exception e) {
+            System.err.println("Error closing output: " + e.getMessage());
+        }
+
+        try {
+            if (clientSocket != null) {
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error closing client socket: " + e.getMessage());
+        }
+
+        try {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error closing server socket: " + e.getMessage());
         }
     }
 }

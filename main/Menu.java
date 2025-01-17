@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Objects;
+
 import static main.Utils.createRoundedButton;
 
 public class Menu extends JPanel {
@@ -46,7 +47,9 @@ public class Menu extends JPanel {
         playWithAiButton.addActionListener(e -> startGame(GameType.MULTIPLAYER_AS_HOST_WHITE));
         playWithAPButton.addActionListener(e -> startGame(GameType.MULTIPLAYER_AS_CLIENT));
         settingsButton.addActionListener(e -> showSettings());
-        exitButton.addActionListener(e -> System.exit(0));
+        //TODO: exitButton.addActionListener(e -> System.exit(0));
+        exitButton.addActionListener(e -> showLobby());
+
 
         // Add buttons to panel
         buttonPanel.add(playWithAiButton);
@@ -59,15 +62,17 @@ public class Menu extends JPanel {
     }
 
     private void startGame(GameType gameType) {
-
         GamePanel gamePanel = new GamePanel(parentWindow, gameType);
         parentWindow.switchToPanel(gamePanel);
         gamePanel.launchGame();
-
     }
 
     private void showSettings() {
         parentWindow.switchToPanel(new Settings(parentWindow));
+    }
+
+    private void showLobby() {
+        parentWindow.switchToPanel(new LobbyPanel(parentWindow));
     }
 
     @Override
