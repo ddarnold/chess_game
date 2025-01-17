@@ -1,5 +1,7 @@
 package main;
 
+import multiplayer.GameClient;
+import multiplayer.GameServer;
 import piece.*;
 
 import javax.swing.*;
@@ -19,36 +21,69 @@ public class GamePanel extends JPanel implements Runnable {
 
     // GAME STATE VARIABLES
     private Thread gameThread;
-    private boolean gameOver, stalemate, draw, promotion, isAi;
+    private boolean gameOver, stalemate, draw, promotion, isAi, isMultiplayer;
     private static int fiftyMoveCounter = 0;
     public static int currentColor = WHITE;
-    public static int aiColor;
+    public static int opponentColor;
 
     // GAME OBJECTS
     private final Board board = new Board();
     private final Mouse mouse;
-    private final AI ai;
+    private AI ai;
     public static ArrayList<Piece> pieces = new ArrayList<>();
     public static ArrayList<Piece> simPieces = new ArrayList<>();
-    private ArrayList<Piece> promoPieces = new ArrayList<>();
+    private final ArrayList<Piece> promoPieces = new ArrayList<>();
     private final HashMap<String, Integer> boardStates = new HashMap<>();
     private Piece activePiece, checkingPiece;
     public static Piece castlingPiece;
+    private Object connection;
 
     // BOOLEANS
     boolean canMove;
     boolean validSquare;
 
     // CONSTRUCTOR
-    public GamePanel(Main parentWindow, boolean isAi, int colorAI) {
-        this.mouse = new Mouse(parentWindow, this);
-        this.isAi = isAi;
-        this.ai = isAi ? new AI(pieces) : null;
-        aiColor = isAi ? colorAI : -1;
+    public GamePanel(Main parentWindow, GameType selectedGameType, Object connection) {
+        this.connection = connection;
 
+        this.mouse = new Mouse(parentWindow, this);
+
+        // Graphics and game state
         initializeUI(parentWindow);
         initializeGameState();
+
+        // Different Multiplayer Game Modes
+        if (selectedGameType == GameType.MULTIPLAYER_AS_CLIENT) {
+            opponentColor = WHITE;
+            isMultiplayer = true;
+        } else if (selectedGameType == GameType.MULTIPLAYER_AS_HOST_WHITE) {
+            opponentColor = BLACK;
+            isMultiplayer = true;
+        } else  throw new IllegalArgumentException();
     }
+
+    public GamePanel(Main parentWindow, GameType selectedGameType) {
+        this.mouse = new Mouse(parentWindow, this);
+
+        // Graphics and game state
+        initializeUI(parentWindow);
+        initializeGameState();
+
+        // Different Game Modes
+        if (selectedGameType == GameType.AGAINST_AI_AS_WHITE) {
+            this.isAi = true;
+            this.ai = new AI(pieces);
+            opponentColor = BLACK;
+        } else if (selectedGameType == GameType.AGAINST_AI_AS_BLACK) {
+            this.isAi = true;
+            this.ai = new AI(pieces);
+            opponentColor = BLACK;
+        }
+//         else if (selectedGameType == GameType.LOCAL_2_PLAYER) {
+//
+//        }
+    }
+
 
     // INITIALIZATION
     private void initializeUI(Main parentWindow) {
@@ -125,8 +160,10 @@ public class GamePanel extends JPanel implements Runnable {
         if (promotion) {
             promoting();
         } else if (!gameOver && !stalemate) {
-            if (currentColor == aiColor && isAi) {
+            if (currentColor == opponentColor && isAi) {
                 executeAIMove();
+            } else if (currentColor == opponentColor && isMultiplayer) {
+                executeMultiplayerMove();
             } else {
                 handlePlayerMove();
             }
@@ -135,14 +172,18 @@ public class GamePanel extends JPanel implements Runnable {
 
     // EVENT HANDLING
     private void executeAIMove() {
-        int[] move = ai.getNextMove(aiColor);
+        int[] move = ai.getNextMove(opponentColor);
+        executeMultiplayerOpponentMove(move);
+    }
+
+    private void executeMultiplayerOpponentMove(int[] move) {
         if (move != null) {
             Piece piece = getPieceAt(move[0], move[1]);
             if (piece != null) {
                 Piece targetPiece = getPieceAt(move[2], move[3]);
 
                 // Remove the captured piece
-                if (targetPiece != null && targetPiece.color != aiColor) {
+                if (targetPiece != null && targetPiece.color != opponentColor) {
                     pieces.remove(targetPiece);
                 }
 
@@ -164,6 +205,18 @@ public class GamePanel extends JPanel implements Runnable {
         } else {
             gameOver = true; // Stalemate or checkmate
         }
+    }
+
+    private void executeMultiplayerMove() {
+        // Wait for the opponent's move
+        String opponentMove;
+        if (connection instanceof GameServer) {
+            opponentMove = ((GameServer) connection).receiveMessage();
+        } else {
+            opponentMove = ((GameClient) connection).receiveMessage();
+        }
+
+        executeMultiplayerOpponentMove(parseCoordinates(opponentMove));
     }
 
     private void handlePlayerMove() {
@@ -232,6 +285,7 @@ public class GamePanel extends JPanel implements Runnable {
     private void processMove() {
         if (validSquare) {
             // MOVE CONFIRMED
+
             finalizeMove();
         } else {
             // The move is not valid so reset everything
@@ -240,7 +294,21 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
+    private void sendMoveInformation() {
+        String move = activePiece.getMoveString(); // Get input from the UI
+        if (connection instanceof GameServer) {
+            ((GameServer) connection).sendMessage(move);
+        } else {
+            ((GameClient) connection).sendMessage(move);
+        }
+    }
+
     private void finalizeMove() {
+        // TODO: probably wrong position
+        if (isMultiplayer) {
+            sendMoveInformation();
+        }
+
         // Update the piece list in case a piece has been captured and removed during the simulation
         copyPieces(simPieces, pieces);
         activePiece.updatePosition();
@@ -651,6 +719,7 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean opponentCanCaptureKing() {
         Piece king = getKing(false);
         for (Piece piece : simPieces) {
+            assert king != null;
             if (piece.color != king.color && piece.canMove(king.col, king.row)) {
                 return true;
             }
@@ -772,7 +841,7 @@ public class GamePanel extends JPanel implements Runnable {
     private void promoteAIPawn(Piece pawn) {
         // TODO: for now promote to Queen only
         pieces.remove(pawn);
-        pieces.add(new Queen(aiColor, pawn.col, pawn.row));
+        pieces.add(new Queen(opponentColor, pawn.col, pawn.row));
     }
 
     private boolean canPromote() {
@@ -835,5 +904,22 @@ public class GamePanel extends JPanel implements Runnable {
         state.append(currentColor).append(";");
 
         return state.toString();
+    }
+
+    // string → int[startCol, startRow, targetCol, targetRow]
+    public static int[] parseCoordinates(String input) {
+        // Remove the brackets and whitespace
+        String cleanedInput = input.replaceAll("[\\[\\]\\s]", "");
+
+        // Split the string by commas
+        String[] parts = cleanedInput.split(",");
+
+        // Convert to integers
+        int[] coordinates = new int[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            coordinates[i] = Integer.parseInt(parts[i]);
+        }
+
+        return coordinates;
     }
 }

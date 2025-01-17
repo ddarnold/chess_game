@@ -8,6 +8,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static main.Constants.*;
 
@@ -82,6 +83,20 @@ public class Piece {
         preCol = getCol(x);
         preRow = getRow(y);
         moved = true;
+    }
+
+    private int[] getMove() {
+        int[] move = new int[4];
+        move[0] = preCol;
+        move[1] = preRow;
+        move[2] = col;
+        move[3] = row;
+
+        return move;
+    }
+
+    public String getMoveString() {
+        return Arrays.toString(getMove());
     }
 
     public void resetPosition() {
