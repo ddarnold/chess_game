@@ -33,23 +33,22 @@ public class Menu extends JPanel {
 
         // Buttons Panel with Margins
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(4, 1, 10, 10)); // 3 buttons, no gaps
+        buttonPanel.setLayout(new GridLayout(5, 1, 10, 10)); // 3 buttons, no gaps
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 100, 200, 750)); // Add margins around the buttons
 
         // Create buttons
         RoundedButton playWithAiButton = createRoundedButton("Play vs AI");
-        RoundedButton playWithAPButton = createRoundedButton("Play vs Human");
+        RoundedButton playOfflineButton = createRoundedButton("Play Offline");
+        RoundedButton playOnlineButton = createRoundedButton("Play Online");
         JButton settingsButton = createRoundedButton("Settings");
         JButton exitButton = createRoundedButton("Exit");
-//        playWithAiButton.addActionListener(e -> startGame(GameType.AGAINST_AI_AS_WHITE));
-//        playWithAPButton.addActionListener(e -> startGame(GameType.LOCAL_2_PLAYER));
-        playWithAiButton.addActionListener(e -> startGame(GameType.MULTIPLAYER_AS_HOST_WHITE));
-        playWithAPButton.addActionListener(e -> startGame(GameType.MULTIPLAYER_AS_CLIENT));
+        playWithAiButton.addActionListener(e -> startGame(GameType.AGAINST_AI_AS_WHITE));
+        playOfflineButton.addActionListener(e -> startGame(GameType.LOCAL_2_PLAYER));
+        playOnlineButton.addActionListener(e -> showLobby());
         settingsButton.addActionListener(e -> showSettings());
-        //TODO: exitButton.addActionListener(e -> System.exit(0));
-        exitButton.addActionListener(e -> showLobby());
-
+        exitButton.addActionListener(e -> System.exit(0));
+    
 
         // Add buttons to panel
         buttonPanel.add(playWithAiButton);
