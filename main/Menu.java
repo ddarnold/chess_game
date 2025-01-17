@@ -52,7 +52,8 @@ public class Menu extends JPanel {
 
         // Add buttons to panel
         buttonPanel.add(playWithAiButton);
-        buttonPanel.add(playWithAPButton);
+        buttonPanel.add(playOfflineButton);
+        buttonPanel.add(playOnlineButton);
         buttonPanel.add(settingsButton);
         buttonPanel.add(exitButton);
 
