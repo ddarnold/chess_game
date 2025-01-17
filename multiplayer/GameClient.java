@@ -11,6 +11,9 @@ public class GameClient {
     private BufferedReader input;
     private PrintWriter output;
 
+    GameClientDiscovery discovery;
+    Thread discoveryThread;
+
     public void connectToServer(String host, int port) {
         try {
             socket = new Socket(host, port);

@@ -4,44 +4,51 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.InetSocketAddress;
 
 public class GameServer {
     private ServerSocket serverSocket;
+    private boolean running = true;
+
     private Socket clientSocket;
     private BufferedReader input;
     private PrintWriter output;
 
-    public void startServer(int port){
-        try {
-            ServerSocket serverSocket = new ServerSocket();
-            serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(port));
-            System.out.println("Server started. Waiting for a client...");
-            clientSocket = serverSocket.accept();
-            System.out.println("Client connected.");
-
-            input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            output = new PrintWriter(clientSocket.getOutputStream(), true);
-        } catch (IOException e) {
-            System.err.println("Error starting server: " + e.getMessage());
-            stopServer(); // Ensure partial resources are released.
-        }
-    }
-
     public void startServer() {
         try {
-            ServerSocket serverSocket = new ServerSocket();
+            serverSocket = new ServerSocket();
             serverSocket.setReuseAddress(true);
             serverSocket.bind(new InetSocketAddress(Constants.PORT));
-            System.out.println("Server started. Waiting for a client...");
-            clientSocket = serverSocket.accept();
-            System.out.println("Client connected.");
+            System.out.println("Server started on port: " + Constants.PORT + ",  Waiting for a client...");
 
-            input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            output = new PrintWriter(clientSocket.getOutputStream(), true);
+            // Start broadcasting availability
+            GameServerBroadcaster broadcaster = new GameServerBroadcaster(Constants.PORT);
+            Thread broadcasterThread = new Thread(broadcaster);
+            broadcasterThread.start();
+
+            // Accept connections
+            new Thread(() -> {
+                while (running) {
+                    try {
+                        System.out.println("Waiting for a client...");
+                        Socket clientSocket = serverSocket.accept();
+                        System.out.println("Client connected: " + clientSocket.getInetAddress());
+
+                        input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        output = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                        // Stop broadcasting once a client connects
+                        broadcaster.stop();
+                    } catch (IOException e) {
+                        if (running) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }).start();
+
         } catch (IOException e) {
             System.err.println("Error starting server: " + e.getMessage());
             stopServer(); // Ensure partial resources are released.
@@ -55,7 +62,7 @@ public class GameServer {
         }
     }
 
-    public String receiveMessage(){
+    public String receiveMessage() {
         try {
             return input.readLine();
         } catch (IOException e) {
@@ -96,6 +103,8 @@ public class GameServer {
         } catch (IOException e) {
             System.err.println("Error closing server socket: " + e.getMessage());
         }
+
+        running = false;
     }
 }
 

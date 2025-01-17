@@ -57,10 +57,6 @@ public class LobbyPanel extends JPanel {
             server = new GameServer();
             server.startServer(); // Start the server logic
 
-            // Optionally start broadcasting
-//            GameServerBroadcaster broadcaster = new GameServerBroadcaster();
-//            Thread broadcasterThread = new Thread(broadcaster);
-//            broadcasterThread.start();
 
             startGame(GameType.MULTIPLAYER_AS_HOST_WHITE, server);
         } catch (Exception e) {
@@ -71,22 +67,16 @@ public class LobbyPanel extends JPanel {
 
     private void discoverGames() {
         System.out.println("Discovering games...");
-        try {
-            GameClientDiscovery discovery = new GameClientDiscovery();
-            discoveryThread = new Thread(discovery);
-            discoveryThread.start();
+        GameClientDiscovery discovery = new GameClientDiscovery();
+        discovery.setListener((serverAddress, serverPort) -> SwingUtilities.invokeLater(() -> serverList.append(serverAddress + ":" + serverPort + "\n")));
 
-            // Update server list (for now, manually add a dummy entry)
-            serverList.append("Discovered server at 192.168.0.1:12345\n");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to discover games: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        discoveryThread = new Thread(discovery);
+        discoveryThread.start();
     }
 
     private void joinGame() {
         try {
-            String serverAddress = JOptionPane.showInputDialog(this, "Enter Server Address (e.g., localhost:12345):");
+            String serverAddress = JOptionPane.showInputDialog(this, "Enter Server Address (e.g., localhost:8008):");
             if (serverAddress == null || serverAddress.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Server address cannot be empty!", "Error", JOptionPane.WARNING_MESSAGE);
                 return;
