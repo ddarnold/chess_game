@@ -41,8 +41,10 @@ public class Menu extends JPanel {
         RoundedButton playWithAPButton = createRoundedButton("Play vs Human");
         JButton settingsButton = createRoundedButton("Settings");
         JButton exitButton = createRoundedButton("Exit");
-        playWithAiButton.addActionListener(e -> startGame(true, GamePanel.BLACK));
-        playWithAPButton.addActionListener(e -> startGame(false, GamePanel.BLACK));
+//        playWithAiButton.addActionListener(e -> startGame(GameType.AGAINST_AI_AS_WHITE));
+//        playWithAPButton.addActionListener(e -> startGame(GameType.LOCAL_2_PLAYER));
+        playWithAiButton.addActionListener(e -> startGame(GameType.MULTIPLAYER_AS_HOST_WHITE));
+        playWithAPButton.addActionListener(e -> startGame(GameType.MULTIPLAYER_AS_CLIENT));
         settingsButton.addActionListener(e -> showSettings());
         exitButton.addActionListener(e -> System.exit(0));
 
@@ -56,9 +58,9 @@ public class Menu extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private void startGame(boolean isAi, int colorAi) {
+    private void startGame(GameType gameType) {
 
-        GamePanel gamePanel = new GamePanel(parentWindow, isAi, colorAi);
+        GamePanel gamePanel = new GamePanel(parentWindow, gameType);
         parentWindow.switchToPanel(gamePanel);
         gamePanel.launchGame();
 
