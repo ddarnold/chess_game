@@ -7,7 +7,7 @@ import java.util.List;
 
 public class AI {
     private final ArrayList<Piece> pieces;
-    private static final int MAX_DEPTH = 3;
+    private static final int MAX_DEPTH = 4;
 
     public AI(ArrayList<Piece> pieces) {
         this.pieces = pieces;
@@ -28,6 +28,8 @@ public class AI {
 
         for (Move move : possibleMoves) {
             executeMove(move);
+            System.out.println("Executing move: t2" + move);
+
             if (isKingInCheck(aiColor)) {
                 undoMove(move);
                 continue; // Skip moves that leave the king in check
@@ -60,22 +62,45 @@ public class AI {
 
     private List<Move> generateAllMoves(int color) {
         List<Move> moves = new ArrayList<>();
-        for (Piece piece : pieces) {
+        List<Piece> piecesCopy = new ArrayList<>(pieces);
+
+        for (Piece piece : piecesCopy) {
             if (piece.color == color) {
                 for (int col = 0; col < 8; col++) {
                     for (int row = 0; row < 8; row++) {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != color) {
-                                moves.add(new Move(piece.col, piece.row, col, row, targetPiece));
+                                Move move = new Move(piece.col, piece.row, col, row, targetPiece);
+
+                                // Apply the move temporarily
+                                executeMove(move);
+
+                                // Check for checkmate
+                                if (isCheckmate(1 - color)) {
+                                    move.score += 10000; // Reward checkmate moves
+                                } else if (isKingInCheck(1 - color)) {
+                                    move.score += 50; // Reward moves that put the opponent in check
+                                }
+
+                                // Undo the move
+                                undoMove(move);
+
+                                // Add the move to the list
+                                moves.add(move);
                             }
                         }
                     }
                 }
             }
         }
+
+        // Sort moves by score in descending order to improve pruning
+        moves.sort((m1, m2) -> Integer.compare(m2.score, m1.score));
         return moves;
     }
+
+
 
     private void executeMove(Move move) {
         Piece piece = getPieceAt(move.startCol, move.startRow);
@@ -85,6 +110,8 @@ public class AI {
             piece.row = move.targetRow;
             pieces.remove(move.capturedPiece);
         }
+//        System.out.println("Executing move: " + move);
+
     }
 
     private void undoMove(Move move) {
@@ -100,15 +127,44 @@ public class AI {
 
     private int evaluateBoard(int aiColor) {
         int score = 0;
+
+        // Check for checkmate or losing conditions
+        if (isCheckmate(1 - aiColor)) return Integer.MAX_VALUE; // Bot wins
+        if (isCheckmate(aiColor)) return Integer.MIN_VALUE; // Bot loses
+        if (isKingInCheck(aiColor)) score -= 200; // Heavily penalize if the bot's king is in check
+
         for (Piece piece : pieces) {
             int value = getPieceValue(piece);
             score += (piece.color == aiColor ? value : -value);
+
             if (isCenterPosition(piece)) {
                 score += (piece.color == aiColor ? 5 : -5); // Bonus for central control
             }
+
+            // Bonus for attacking opponent's king
+            if (piece.color == aiColor && canAttackKing(piece, 1 - aiColor)) {
+                score += 100; // Reward moves that attack the king
+            }
+
+            // Penalty for leaving the bot's king exposed
+            if (piece.type == Type.KING && piece.color == aiColor && !isKingSafe(piece)) {
+                score -= 50;
+            }
         }
+
         return score;
     }
+
+    private boolean canAttackKing(Piece piece, int opponentColor) {
+        Piece king = pieces.stream().filter(p -> p.type == Type.KING && p.color == opponentColor).findFirst().orElse(null);
+        return king != null && piece.canMove(king.col, king.row);
+    }
+
+    private boolean isKingSafe(Piece king) {
+        return pieces.stream().noneMatch(p -> p.color != king.color && p.canMove(king.col, king.row));
+    }
+
+
 
     private int getPieceValue(Piece piece) {
         switch (piece.type) {
@@ -170,4 +226,17 @@ public class AI {
             this.score = score;
         }
     }
+
+    private boolean isCheckmate(int color) {
+        if (!isKingInCheck(color)) return false; // Not in check, so no checkmate
+        List<Move> possibleMoves = generateAllMoves(color);
+        for (Move move : possibleMoves) {
+            executeMove(move);
+            boolean kingStillInCheck = isKingInCheck(color);
+            undoMove(move);
+            if (!kingStillInCheck) return false; // Escape route exists
+        }
+        return true; // No escape, checkmate
+    }
+
 }
