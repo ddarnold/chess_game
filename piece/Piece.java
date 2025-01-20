@@ -8,6 +8,8 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 
 import static main.Constants.*;
@@ -21,7 +23,6 @@ public class Piece {
     public int color;
     public Piece hittingPiece;
     public boolean moved, twoStepped;
-
 
     public Piece(int color, int col, int row) {
         this.color = color;
@@ -37,7 +38,7 @@ public class Piece {
         BufferedImage image = null;
 
         try {
-            image = ImageIO.read(getClass().getResourceAsStream(imagePath + ".png"));
+            image = ImageIO.read(getClass().getResourceAsStream("/res/" + imagePath + ".png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -71,7 +72,6 @@ public class Piece {
     }
 
     public void updatePosition() {
-        // To check En Passant
         if (type == Type.PAWN) {
             if (Math.abs(row - preRow) == 2) {
                 twoStepped = true;
@@ -80,8 +80,8 @@ public class Piece {
 
         x = getX(col);
         y = getY(row);
-        preCol = getCol(x);
-        preRow = getRow(y);
+        preCol = col; // Direct assignment
+        preRow = row; // Direct assignment
         moved = true;
     }
 
@@ -102,8 +102,8 @@ public class Piece {
     public void resetPosition() {
         col = preCol;
         row = preRow;
-        x = getX(col);
-        y = getY(row);
+        x = getX(preCol); // Use preCol
+        y = getY(preRow); // Use preRow
     }
 
     public boolean canMove(int targetCol, int targetRow) {
@@ -119,7 +119,6 @@ public class Piece {
     }
 
     public boolean pieceIsOnStraightLine(int targetCol, int targetRow) {
-        // When the piece is moving to the left
         for (int c = preCol - 1; c > targetCol; c--) {
             for (Piece piece : GamePanel.simPieces) {
                 if (piece.col == c && piece.row == targetRow) {
@@ -129,7 +128,6 @@ public class Piece {
             }
         }
 
-        // When the piece is moving to the left
         for (int c = preCol + 1; c < targetCol; c++) {
             for (Piece piece : GamePanel.simPieces) {
                 if (piece.col == c && piece.row == targetRow) {
@@ -139,7 +137,6 @@ public class Piece {
             }
         }
 
-        // When the piece is moving up
         for (int r = preRow - 1; r > targetRow; r--) {
             for (Piece piece : GamePanel.simPieces) {
                 if (piece.col == targetCol && piece.row == r) {
@@ -149,7 +146,6 @@ public class Piece {
             }
         }
 
-        // When the piece is moving down
         for (int r = preRow + 1; r < targetRow; r++) {
             for (Piece piece : GamePanel.simPieces) {
                 if (piece.col == targetCol && piece.row == r) {
@@ -164,7 +160,6 @@ public class Piece {
 
     public boolean pieceIsOnDiagonalLine(int targetCol, int targetRow) {
         if (targetRow < preRow) {
-            // Up left
             for (int c = preCol - 1; c > targetCol; c--) {
                 int diff = Math.abs(c - preCol);
                 for (Piece piece : GamePanel.simPieces) {
@@ -174,7 +169,7 @@ public class Piece {
                     }
                 }
             }
-            // Up right
+
             for (int c = preCol + 1; c < targetCol; c++) {
                 int diff = Math.abs(c - preCol);
                 for (Piece piece : GamePanel.simPieces) {
@@ -187,7 +182,6 @@ public class Piece {
         }
 
         if (targetRow > preRow) {
-            // Down left
             for (int c = preCol - 1; c > targetCol; c--) {
                 int diff = Math.abs(c - preCol);
                 for (Piece piece : GamePanel.simPieces) {
@@ -197,7 +191,7 @@ public class Piece {
                     }
                 }
             }
-            // Down right
+
             for (int c = preCol + 1; c < targetCol; c++) {
                 int diff = Math.abs(c - preCol);
                 for (Piece piece : GamePanel.simPieces) {
@@ -224,16 +218,51 @@ public class Piece {
     public boolean isValidSquare(int targetCol, int targetRow) {
         hittingPiece = getHittingPiece(targetCol, targetRow);
 
-        if (hittingPiece == null) { // Square is NOT occupied
+        if (hittingPiece == null) {
             return true;
-        } else { // Square is occupied
-            // If the color is different, it can be captured
+        } else {
             if (hittingPiece.color != this.color) {
                 return true;
             } else hittingPiece = null;
         }
 
         return false;
+    }
+
+    public List<int[]> getLegalMoves() {
+        List<int[]> legalMoves = new ArrayList<>();
+        for (int col = 0; col < 8; col++) {
+            for (int row = 0; row < 8; row++) {
+                if (canMove(col, row)) {
+                    legalMoves.add(new int[]{col, row});
+                }
+            }
+        }
+        return legalMoves;
+    }
+
+    public boolean canMoveAnywhere() {
+        return !getLegalMoves().isEmpty();
+    }
+
+    public int mobilityBonus() {
+        int mobility = 0;
+        for (int col = 0; col < 8; col++) {
+            for (int row = 0; row < 8; row++) {
+                if (canMove(col, row)) {
+                    mobility++;
+                }
+            }
+        }
+        switch(this.type) {
+            case PAWN: return mobility * 1; // Pawns benefit less from mobility
+            case KNIGHT:
+            case BISHOP: return mobility * 2; // Knights and Bishops benefit from mobility
+            case ROOK: return mobility * 3; // Rooks like to have open files and ranks
+            case QUEEN: return mobility * 4; // Queens benefit greatly from mobility
+            case KING: return mobility * 2; // King's mobility is crucial in the endgame
+            default: return 0;
+        }
     }
 
     public void draw(Graphics2D g2) {
