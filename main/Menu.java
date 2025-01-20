@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Objects;
+
 import static main.Utils.createRoundedButton;
 
 public class Menu extends JPanel {
@@ -32,23 +33,27 @@ public class Menu extends JPanel {
 
         // Buttons Panel with Margins
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(4, 1, 10, 10)); // 3 buttons, no gaps
+        buttonPanel.setLayout(new GridLayout(5, 1, 10, 10)); // 3 buttons, no gaps
         buttonPanel.setOpaque(false);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 100, 200, 750)); // Add margins around the buttons
 
         // Create buttons
         RoundedButton playWithAiButton = createRoundedButton("Play vs AI");
-        RoundedButton playWithAPButton = createRoundedButton("Play vs Human");
+        RoundedButton playOfflineButton = createRoundedButton("Play Offline");
+        RoundedButton playOnlineButton = createRoundedButton("Play Online");
         JButton settingsButton = createRoundedButton("Settings");
         JButton exitButton = createRoundedButton("Exit");
-        playWithAiButton.addActionListener(e -> startGame(true, GamePanel.BLACK));
-        playWithAPButton.addActionListener(e -> startGame(false, GamePanel.BLACK));
+        playWithAiButton.addActionListener(e -> startGame(GameType.AGAINST_AI_AS_WHITE));
+        playOfflineButton.addActionListener(e -> startGame(GameType.LOCAL_2_PLAYER));
+        playOnlineButton.addActionListener(e -> showLobby());
         settingsButton.addActionListener(e -> showSettings());
         exitButton.addActionListener(e -> System.exit(0));
+    
 
         // Add buttons to panel
         buttonPanel.add(playWithAiButton);
-        buttonPanel.add(playWithAPButton);
+        buttonPanel.add(playOfflineButton);
+        buttonPanel.add(playOnlineButton);
         buttonPanel.add(settingsButton);
         buttonPanel.add(exitButton);
 
@@ -56,16 +61,18 @@ public class Menu extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private void startGame(boolean isAi, int colorAi) {
-
-        GamePanel gamePanel = new GamePanel(parentWindow, isAi, colorAi);
+    private void startGame(GameType gameType) {
+        GamePanel gamePanel = new GamePanel(parentWindow, gameType);
         parentWindow.switchToPanel(gamePanel);
         gamePanel.launchGame();
-
     }
 
     private void showSettings() {
         parentWindow.switchToPanel(new Settings(parentWindow));
+    }
+
+    private void showLobby() {
+        parentWindow.switchToPanel(new LobbyPanel(parentWindow));
     }
 
     @Override

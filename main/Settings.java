@@ -21,7 +21,7 @@ public class Settings extends JPanel {
         add(title, BorderLayout.NORTH);
 
         // Dropdown for theme selection
-        String[] themes = {GREEN_THEME_TEXT, BROWN_THEME_TEXT};
+        String[] themes = {GREEN_THEME_TEXT, BROWN_THEME_TEXT, BLUE_THEME_TEXT};
         JPanel dropdownPanel = getDropdownPanel(themes, theme);
         add(dropdownPanel, BorderLayout.CENTER);
 
@@ -33,7 +33,17 @@ public class Settings extends JPanel {
 
         // Set the current theme as the default selection
         if (theme != null) {
-            themeSelector.setSelectedItem(theme.equals(GREEN_THEME) ? GREEN_THEME_TEXT : BROWN_THEME_TEXT);
+            switch (theme) {
+                case GREEN_THEME:
+                    themeSelector.setSelectedItem(GREEN_THEME_TEXT);
+                    break;
+                case BROWN_THEME:
+                    themeSelector.setSelectedItem(BROWN_THEME_TEXT);
+                    break;
+                case BLUE_THEME:
+                    themeSelector.setSelectedItem(BLUE_THEME_TEXT);
+                    break;
+            }
         }
 
         themeSelector.addActionListener(e -> {
@@ -44,6 +54,9 @@ public class Settings extends JPanel {
             } else if (BROWN_THEME_TEXT.equals(selectedTheme)) {
                 Utils.applyTheme(BROWN_THEME);
                 JsonHandler.writeJson(PREFERENCES_THEME, BROWN_THEME);
+            } else if (BLUE_THEME_TEXT.equals(selectedTheme)) {
+                Utils.applyTheme(BLUE_THEME);
+                JsonHandler.writeJson(PREFERENCES_THEME, BLUE_THEME);
             }
         });
 
