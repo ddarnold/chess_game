@@ -15,7 +15,7 @@ public class AI {
 
     public int[] getNextMove(int aiColor) {
         Move bestMove = minimax(MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, true, aiColor);
-        return new int[]{bestMove.startCol, bestMove.startRow, bestMove.targetCol, bestMove.targetRow};
+        return bestMove != null ? new int[]{bestMove.startCol, bestMove.startRow, bestMove.targetCol, bestMove.targetRow} : null;
     }
 
     private Move minimax(int depth, int alpha, int beta, boolean isMaximizingPlayer, int aiColor) {
@@ -71,6 +71,9 @@ public class AI {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != color) {
+                                if (targetPiece != null && getPieceValue(piece) > getPieceValue(targetPiece)) {
+                                    continue;
+                                }
                                 moves.add(new Move(piece.col, piece.row, col, row, targetPiece));
                             }
                         }
@@ -115,13 +118,21 @@ public class AI {
     }
 
     private int getPieceValue(Piece piece) {
-        return switch (piece.type) {
-            case PAWN -> 10;
-            case KNIGHT, BISHOP -> 30;
-            case ROOK -> 50;
-            case QUEEN -> 90;
-            case KING -> 900;
-        };
+        switch (piece.type) {
+            case PAWN:
+                return 10;
+            case KNIGHT:
+            case BISHOP:
+                return 30;
+            case ROOK:
+                return 50;
+            case QUEEN:
+                return 90;
+            case KING:
+                return 5;
+            default:
+                return 0;
+        }
     }
 
     private boolean isCenterPosition(Piece piece) {
