@@ -13,6 +13,7 @@ public class AI {
         this.pieces = pieces;
     }
 
+
     public int[] getNextMove(int aiColor) {
         Move bestMove = minimax(MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, true, aiColor);
         return bestMove != null ? new int[]{bestMove.startCol, bestMove.startRow, bestMove.targetCol, bestMove.targetRow} : null;
