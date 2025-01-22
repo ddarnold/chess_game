@@ -19,50 +19,47 @@ public class King extends Piece {
     @Override
     public boolean canMove(int targetCol, int targetRow) {
         if (isWithinBoard(targetCol, targetRow)) {
-            // Standard King Movement: One square in any direction
-            if (Math.abs(targetCol - preCol) <= 1 && Math.abs(targetRow - preRow) <= 1) {
-                return isValidSquare(targetCol, targetRow); // Ensure the target square is valid
-            }
-
-            // Castling Logic
-            if (!moved && targetRow == preRow) { // Ensure the king hasn't moved and stays in the same row
-                // Right Castling
-                if (targetCol == preCol + 2 && isValidCastling(preCol + 3, preCol + 1, preCol + 2)) {
-                    return true;
-                }
-
-                // Left Castling
-                if (targetCol == preCol - 2 && isValidCastling(preCol - 4, preCol - 1, preCol - 2)) {
+            // Movement
+            if (Math.abs(targetCol - preCol) + Math.abs(targetRow - preRow) == 1 || // up, down, left, right
+                    (Math.abs(targetCol - preCol) * Math.abs(targetRow - preRow) == 1)) // diagonals
+            {
+                if (isValidSquare(targetCol, targetRow)) {
                     return true;
                 }
             }
+
+            // Castling
+            if (!moved) {
+                // Right castling
+                if (targetCol == preCol+2 && targetRow == preRow && !pieceIsOnStraightLine(targetCol, targetRow)) {
+                    for (Piece piece : GamePanel.simPieces) {
+                        if (piece.col == preCol+3 && piece.row == preRow && !piece.moved) {
+                            GamePanel.castlingPiece = piece;
+                            return true;
+                        }
+                    }
+                }
+
+                // Left castling
+                if (targetCol == preCol-2 && targetRow == preRow && !pieceIsOnStraightLine(targetCol, targetRow)) {
+                    Piece p[] = new Piece[2];
+                    for (Piece piece : GamePanel.simPieces) {
+                        if (piece.col == preCol-3 && piece.row == targetRow) {
+                            p[0] = piece;
+                        }
+                        if (piece.col == preCol-4 && piece.row == targetRow) {
+                            p[1] = piece;
+                        }
+
+                        if(p[0] == null && p[1] != null && !p[1].moved){
+                            GamePanel.castlingPiece = p[1];
+                            return true;
+                        }
+                    }
+                }
+            }
         }
 
-        return false; // If none of the conditions are met, the move is invalid
-    }
-
-    // Helper Method to Validate Castling
-    private boolean isValidCastling(int rookCol, int pathCol1, int pathCol2) {
-        // Find the rook at the specified column
-        Piece rook = GamePanel.simPieces.stream()
-                .filter(p -> p.col == rookCol && p.row == preRow && p.type == Type.ROOK && !p.moved)
-                .findFirst()
-                .orElse(null);
-
-        if (rook == null) return false; // No rook found or rook has moved
-
-        // Check that the squares between the king and rook are empty
-        if (GamePanel.simPieces.stream().anyMatch(p -> (p.col == pathCol1 || p.col == pathCol2) && p.row == preRow)) {
-            return false;
-        }
-
-        // Ensure the king does not move through or into check
-        if (GamePanel.simPieces.stream().anyMatch(p -> p.canMove(pathCol1, preRow) || p.canMove(pathCol2, preRow))) {
-            return false;
-        }
-
-        // Set the rook for castling
-        GamePanel.castlingPiece = rook;
-        return true;
+        return false;
     }
 }
