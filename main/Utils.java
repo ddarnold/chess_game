@@ -80,6 +80,7 @@ public class Utils {
     public static void createMenuButton(Main parentWindow, JPanel mainPanel) {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBackground(Color.BLACK);
+        buttonPanel.setOpaque(false);
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         RoundedButton homeButton = createRoundedButton("Menu");
         homeButton.setMinimumSize(new Dimension(200, 50));

@@ -5,6 +5,7 @@ import multiplayer.GameServer;
 import piece.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +52,8 @@ public class GamePanel extends JPanel implements Runnable {
 
     //TIMER
     private ChessTimer chessTimer;
-    private JLabel timerLabel;
+    private JLabel whiteTimerLabel;
+    private JLabel blackTimerLabel;
 
     // CONSTRUCTOR
     public GamePanel(Main parentWindow, GameType selectedGameType, Object connection) {
@@ -104,20 +106,24 @@ public class GamePanel extends JPanel implements Runnable {
         setBackground(Color.black);
         addMouseMotionListener(mouse);
         addMouseListener(mouse);
-        Utils.createMenuButton(parentWindow, this);
         initializeSoundEffects();
     }
 
     private void initializeTimer(Main parent) {
         // Timer label
-        timerLabel = new JLabel("00:00", JLabel.CENTER);
-        timerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
-        timerLabel.setForeground(Color.WHITE);
-        timerLabel.setBackground(Color.BLACK);
-        timerLabel.setOpaque(true);
+        whiteTimerLabel = new JLabel("00:00", JLabel.CENTER);
+        whiteTimerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
+        whiteTimerLabel.setOpaque(false);
+        whiteTimerLabel.setBorder(new EmptyBorder(600,1150,300,50));
+
+        blackTimerLabel = new JLabel("00:00", JLabel.CENTER);
+        blackTimerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
+        blackTimerLabel.setOpaque(false);
+        blackTimerLabel.setBorder(new EmptyBorder(300,1150,600,50));
 
         // Add timer label to the panel
-        add(timerLabel, BorderLayout.EAST);
+        add(whiteTimerLabel, BorderLayout.SOUTH);
+        add(blackTimerLabel, BorderLayout.NORTH);
 
         // Show the TimeSettingsDialog to get the time and increment values
         TimeSettingsDialog dialog = new TimeSettingsDialog(parent);
@@ -128,11 +134,13 @@ public class GamePanel extends JPanel implements Runnable {
             int time = dialog.getTime();        // Starting time in minutes
             int increment = dialog.getIncrement();  // Increment per turn in seconds
             // Initialize the chess timer with the user inputs
-            chessTimer = new ChessTimer(timerLabel, time, increment);
+            chessTimer = new ChessTimer(whiteTimerLabel, blackTimerLabel, time, increment);
         } else {
             JOptionPane.showMessageDialog(parent, "Game settings were not configured.");
             parent.switchToPanel(new Menu(parent));
         }
+
+        Utils.createMenuButton(parent, this);
     }
 
     private void initializeSoundEffects() {

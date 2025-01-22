@@ -10,34 +10,54 @@ public class ChessTimer {
     private int blackTime;
     private int increment;
     private boolean whiteTurn = true;
-    private JLabel timerLabel;
+    private JLabel whiteTimerLabel;
+    private JLabel blackTimerLabel;
 
-    public ChessTimer(JLabel timerLabel, int startingTime, int increment) {
-        this.timerLabel = timerLabel;
-        this.whiteTime = startingTime*60;
-        this.blackTime = startingTime*60;
+    public ChessTimer(JLabel whiteTimerLabel, JLabel blackTimerLabel, int startingTime, int increment) {
+        this.whiteTimerLabel = whiteTimerLabel;
+        this.blackTimerLabel = blackTimerLabel;
+        this.whiteTime = startingTime * 60;
+        this.blackTime = startingTime * 60;
         this.increment = increment;
 
         // Timer for white player
         whiteTimer = new Timer(1000, (ActionEvent e) -> {
-            if (whiteTime > 0 && whiteTurn) {
+            if (whiteTime > 0) {
                 whiteTime--;
                 updateTimerDisplay();
+            } else {
+                stopTimers(); // Stop when time runs out
             }
         });
 
         // Timer for black player
         blackTimer = new Timer(1000, (ActionEvent e) -> {
-            if (blackTime > 0 && !whiteTurn) {
+            if (blackTime > 0) {
                 blackTime--;
                 updateTimerDisplay();
+            } else {
+                stopTimers(); // Stop when time runs out
             }
         });
+
+        // Initial display
+        updateTimerDisplay();
+        highlightActiveTimer();
     }
 
     // Switch turn and start the timer for the other player
     public void switchTurn() {
+        // Apply increment to the player who just finished their turn
+        if (whiteTurn) {
+            whiteTime += increment;
+        } else {
+            blackTime += increment;
+        }
+
+        // Swap active player
         whiteTurn = !whiteTurn;
+
+        // Start the correct timer
         if (whiteTurn) {
             whiteTimer.start();
             blackTimer.stop();
@@ -46,28 +66,36 @@ public class ChessTimer {
             whiteTimer.stop();
         }
 
-        // Add increment after each turn
-        if (whiteTurn) {
-            whiteTime += increment;
-        } else {
-            blackTime += increment;
-        }
+        highlightActiveTimer();
+        updateTimerDisplay();
     }
 
     // Update the displayed time on the UI
     private void updateTimerDisplay() {
-        int minutes, seconds;
+        whiteTimerLabel.setText(formatTime(whiteTime));
+        blackTimerLabel.setText(formatTime(blackTime));
+    }
 
+    // Highlight the active timer
+    private void highlightActiveTimer() {
         if (whiteTurn) {
-            minutes = whiteTime / 60;
-            seconds = whiteTime % 60;
+            whiteTimerLabel.setFont(Utils.deriveFont(20, Font.BOLD));
+            blackTimerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
+            whiteTimerLabel.setForeground(Color.GREEN);
+            blackTimerLabel.setForeground(Color.WHITE);
         } else {
-            minutes = blackTime / 60;
-            seconds = blackTime % 60;
+            blackTimerLabel.setFont(Utils.deriveFont(20, Font.BOLD));
+            whiteTimerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
+            blackTimerLabel.setForeground(Color.GREEN);
+            whiteTimerLabel.setForeground(Color.WHITE);
         }
+    }
 
-        // Display the time in MM:SS format
-        timerLabel.setText(String.format("%02d:%02d", minutes, seconds));
+    // Convert time to MM:SS format
+    private String formatTime(int timeInSeconds) {
+        int minutes = timeInSeconds / 60;
+        int seconds = timeInSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     // Method to stop both timers
