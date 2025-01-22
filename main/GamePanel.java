@@ -56,10 +56,12 @@ public class GamePanel extends JPanel implements Runnable {
         if (selectedGameType == GameType.MULTIPLAYER_AS_CLIENT) {
             opponentColor = WHITE;
             isMultiplayer = true;
+            this.isAi = false;
         } else if (selectedGameType == GameType.MULTIPLAYER_AS_HOST_WHITE) {
             opponentColor = BLACK;
             isMultiplayer = true;
-        } else  throw new IllegalArgumentException();
+            this.isAi = false;
+        } else throw new IllegalArgumentException();
     }
 
     public GamePanel(Main parentWindow, GameType selectedGameType) {
@@ -78,10 +80,10 @@ public class GamePanel extends JPanel implements Runnable {
             this.isAi = true;
             this.ai = new AI(pieces);
             opponentColor = BLACK;
-        }
-//         else if (selectedGameType == GameType.LOCAL_2_PLAYER) {
-//
-//        }
+        } else if (selectedGameType == GameType.LOCAL_2_PLAYER) {
+            this.isAi = false;
+            opponentColor = BLACK;
+        } else throw new IllegalArgumentException();
     }
 
 
