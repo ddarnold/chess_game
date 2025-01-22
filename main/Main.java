@@ -13,16 +13,14 @@ public class Main extends JFrame {
 
     public Main(){
         //Window Configuration
-        setUndecorated(true);
-        setShape(new RoundRectangle2D.Double(0,0, LAYOUT_WIDTH,LAYOUT_HEIGHT,15,15));
+        //setShape(new RoundRectangle2D.Double(0,0, LAYOUT_WIDTH,LAYOUT_HEIGHT,15,15));
         setSize(LAYOUT_WIDTH, LAYOUT_HEIGHT);
-        setResizable(false);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         //Add Custom Header
         Header header = new Header(this);
-        add(header, BorderLayout.NORTH);
+        //add(header, BorderLayout.NORTH);
 
         //Switch to Menu
         switchToPanel(new Menu(this));

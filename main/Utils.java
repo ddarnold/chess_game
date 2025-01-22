@@ -5,8 +5,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static main.Constants.BROWN_THEME;
-import static main.Constants.GREEN_THEME;
+import static main.Constants.*;
 
 public class Utils {
 
@@ -54,6 +53,9 @@ public class Utils {
         } else if (theme.equals(BROWN_THEME)) {
             lightColor = new Color(210, 165, 125);
             darkColor = new Color(175, 115, 70);
+        }else if (theme.equals(BLUE_THEME)) {
+            lightColor = new Color(160, 207, 234);
+            darkColor = new Color(93, 140, 214);
         }
     }
 

@@ -14,4 +14,6 @@ public class Constants {
     public static final String GREEN_THEME_TEXT = "Green Theme";
     public static final String BROWN_THEME = "BROWN";
     public static final String BROWN_THEME_TEXT = "Brown Theme";
+    public static final String BLUE_THEME = "BLUE";
+    public static final String BLUE_THEME_TEXT = "Blue Theme";
 }
