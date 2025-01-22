@@ -3,6 +3,7 @@ package main;
 import piece.Piece;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AI {
@@ -50,7 +51,6 @@ public class AI {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != aiColor) {
-                                // Evaluate the move based on positional values
                                 int positionalValue = POSITIONAL_VALUES[row][col];
                                 openingMoves.add(new Move(piece.col, piece.row, col, row, targetPiece, positionalValue));
                             }
@@ -60,11 +60,18 @@ public class AI {
             }
         }
 
-        // Sort opening moves by positional value and pick the best one
-        openingMoves.sort((m1, m2) -> Integer.compare(m2.score, m1.score));
+        // Shuffle the list to randomize order
+        if (!openingMoves.isEmpty()) {
+            Collections.shuffle(openingMoves); // Adds randomness
 
-        // Return a random move among the top 3 best-scoring moves to add variety
-        return !openingMoves.isEmpty() ? openingMoves.get(Math.min(openingMoves.size() - 1, (int) (Math.random() * 3))) : null;
+            // Sort only after shuffling to prioritize good moves while keeping variety
+            openingMoves.sort((m1, m2) -> Integer.compare(m2.score, m1.score));
+
+            // Return a random move among the top 3 best-scoring moves
+            return openingMoves.get(Math.min(openingMoves.size() - 1, (int) (Math.random() * Math.min(3, openingMoves.size()))));
+        }
+
+        return null; // No valid opening moves found
     }
 
     private Move minimax(int depth, int alpha, int beta, boolean isMaximizingPlayer, int aiColor) {
@@ -109,15 +116,26 @@ public class AI {
 
     private List<Move> generateAllMoves(int color) {
         List<Move> moves = new ArrayList<>();
+        boolean allowKingMove = shouldMoveKing(color);
+
         for (Piece piece : pieces) {
             if (piece.color == color) {
+                // Always allow king moves if the king is in check
+                if (piece.type == Type.KING && (!allowKingMove || isKingInCheck(color))) {
+                    allowKingMove = true;
+                }
+
+                // Skip king moves unless necessary
+                if (piece.type == Type.KING && !allowKingMove) {
+                    continue;
+                }
+
                 for (int col = 0; col < 8; col++) {
                     for (int row = 0; row < 8; row++) {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != color) {
-                                // Prevent the queen from capturing a lower-valued piece unless necessary
-                                if (piece.type == Type.QUEEN && targetPiece != null && getPieceValue(targetPiece) < getPieceValue(piece)) {
+                                if (piece.type == Type.QUEEN && targetPiece != null && getPieceValue(targetPiece) < getPieceValue(piece) && isProtected(targetPiece)) {
                                     continue;
                                 }
                                 moves.add(new Move(piece.col, piece.row, col, row, targetPiece, POSITIONAL_VALUES[row][col]));
@@ -127,8 +145,30 @@ public class AI {
                 }
             }
         }
+
         return moves;
     }
+
+    private boolean isProtected(Piece targetPiece) {
+        if (targetPiece == null) {
+            return false; // Null pieces can't be protected
+        }
+        int targetCol = targetPiece.col;
+        int targetRow = targetPiece.row;
+        int targetColor = targetPiece.color;
+
+        // Check if any piece of the same color can move to the target piece's position
+        for (Piece piece : pieces) {
+            if (piece.color == targetColor && piece != targetPiece) {
+                if (piece.canMove(targetCol, targetRow)) {
+                    return true; // Found a protecting piece
+                }
+            }
+        }
+
+        return false; // No protecting pieces found
+    }
+
 
     private void executeMove(Move move) {
         Piece piece = getPieceAt(move.startCol, move.startRow);
@@ -202,6 +242,11 @@ public class AI {
         }
         return false;
     }
+
+    private boolean shouldMoveKing(int color) {
+        return pieces.stream().noneMatch(p -> p.color == color && p.type != Type.KING);
+    }
+
 
     private Piece getPieceAt(int col, int row) {
         return pieces.stream().filter(p -> p.col == col && p.row == row).findFirst().orElse(null);
