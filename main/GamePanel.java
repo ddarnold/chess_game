@@ -5,7 +5,6 @@ import multiplayer.GameServer;
 import piece.*;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +44,10 @@ public class GamePanel extends JPanel implements Runnable {
     private SoundPlayer castle;
     private SoundPlayer capture;
     private SoundPlayer promote;
+    private SoundPlayer game_start;
+    private SoundPlayer game_end;
+    private SoundPlayer illegal;
+
 
     // BOOLEANS
     boolean canMove;
@@ -65,6 +68,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         // Graphics and game state
         initializeUI(parentWindow);
+        initializeTimer(parentWindow, true);
         initializeGameState();
 
         // Different Multiplayer Game Modes
@@ -83,7 +87,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         // Graphics and game state
         initializeUI(parentWindow);
-        initializeTimer(parentWindow);
+        initializeTimer(parentWindow, false);
         initializeGameState();
 
         // Different Game Modes
@@ -109,14 +113,14 @@ public class GamePanel extends JPanel implements Runnable {
         addMouseMotionListener(mouse);
         addMouseListener(mouse);
         initializeSoundEffects();
+        Utils.createMenuButton(parentWindow, this);
     }
 
-    private void initializeTimer(Main parent) {
-
+    private void initializeTimer(Main parent, boolean isMultiplayer) {
         JPanel southPanel = new JPanel();
         southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
         southPanel.setOpaque(false);
-        southPanel.setBorder(BorderFactory.createEmptyBorder(parent.getHeight()/2-50,1150,parent.getHeight()/2-50,50));
+        southPanel.setBorder(BorderFactory.createEmptyBorder(parent.getHeight() / 2 - 50, 1150, parent.getHeight() / 2 - 50, 50));
 
         // Timer label
         whiteTimerLabel = new JLabel("00:00", JLabel.CENTER);
@@ -137,23 +141,24 @@ public class GamePanel extends JPanel implements Runnable {
 //        add(blackTimerLabel, BorderLayout.WEST);
         add(southPanel, BorderLayout.EAST);
 
-
-        // Show the TimeSettingsDialog to get the time and increment values
-        TimeSettingsDialog dialog = new TimeSettingsDialog(parent);
-        dialog.setVisible(true);
-
-        // Check if the user confirmed the dialog
-        if (dialog.isConfirmed()) {
-            int time = dialog.getTime();        // Starting time in minutes
-            int increment = dialog.getIncrement();  // Increment per turn in seconds
-            // Initialize the chess timer with the user inputs
-            chessTimer = new ChessTimer(whiteTimerLabel, blackTimerLabel, time, increment, GamePanel.this);
+        if (isMultiplayer) {
+            chessTimer = new ChessTimer(whiteTimerLabel, blackTimerLabel, 5, 10, GamePanel.this);
         } else {
-            JOptionPane.showMessageDialog(parent, "Game settings were not configured.");
-            parent.switchToPanel(new Menu(parent));
-        }
+            // Show the TimeSettingsDialog to get the time and increment values
+            TimeSettingsDialog dialog = new TimeSettingsDialog(parent);
+            dialog.setVisible(true);
 
-        Utils.createMenuButton(parent, this);
+            // Check if the user confirmed the dialog
+            if (dialog.isConfirmed()) {
+                int time = dialog.getTime();        // Starting time in minutes
+                int increment = dialog.getIncrement();  // Increment per turn in seconds
+                // Initialize the chess timer with the user inputs
+                chessTimer = new ChessTimer(whiteTimerLabel, blackTimerLabel, time, increment, GamePanel.this);
+            } else {
+                JOptionPane.showMessageDialog(parent, "Game settings were not configured.");
+                parent.switchToPanel(new Menu(parent));
+            }
+        }
     }
 
     private void initializeSoundEffects() {
@@ -162,6 +167,10 @@ public class GamePanel extends JPanel implements Runnable {
         castle = new SoundPlayer("/res/audio/castle.wav");
         capture = new SoundPlayer("/res/audio/capture.wav");
         promote = new SoundPlayer("/res/audio/promote.wav");
+        game_start = new SoundPlayer("/res/audio/game-start.wav");
+        game_end = new SoundPlayer("/res/audio/game-end.wav");
+        illegal = new SoundPlayer("/res/audio/illegal.wav");
+
     }
 
     private void initializeGameState() {
@@ -169,6 +178,7 @@ public class GamePanel extends JPanel implements Runnable {
         copyPieces(pieces, simPieces);
         currentColor = WHITE;
         fiftyMoveCounter = 0;
+        game_start.play();
     }
 
     public void launchGame() {
@@ -359,6 +369,7 @@ public class GamePanel extends JPanel implements Runnable {
             finalizeMove();
         } else {
             // The move is not valid so reset everything
+            illegal.play();
             resetMove();
 
         }
@@ -379,17 +390,22 @@ public class GamePanel extends JPanel implements Runnable {
             sendMoveInformation();
         }
 
+        if (simPieces.size() != pieces.size()) capture.play();
+
         // Update the piece list in case a piece has been captured and removed during the simulation
         copyPieces(simPieces, pieces);
         activePiece.updatePosition();
 
+
         if (castlingPiece != null) {
             castlingPiece.updatePosition();
+            castle.play();
         }
 
         if (!isEndOfGame()) {
             if (canPromote()) {
                 promotion = true;
+                promote.play();
             } else {
                 changePlayer();
             }
@@ -403,6 +419,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void changePlayer() {
+        move_self.play();
         fiftyMoveCounter++;
 
         if (currentColor == WHITE) {
@@ -420,7 +437,7 @@ public class GamePanel extends JPanel implements Runnable {
                 }
             }
         }
-        chessTimer.switchTurn();
+        if (chessTimer != null) chessTimer.switchTurn();
         activePiece = null;
     }
 
@@ -514,7 +531,7 @@ public class GamePanel extends JPanel implements Runnable {
                 } else {
                     s = "Black wins";
                 }
-            }else{
+            } else {
                 if (currentColor == WHITE) {
                     s = "Black wins";
                 } else {
@@ -577,20 +594,24 @@ public class GamePanel extends JPanel implements Runnable {
     // HELPER METHODS
     // State Management
     private boolean isEndOfGame() {
+        boolean isEnd = false;
         if (isCheckmate()) {
             gameOver = true;
-            return true;
+            isEnd = true;
         } else if (isStalemate() && !isKingInCheck()) {
             stalemate = true;
-            return true;
+            isEnd = true;
         } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
             draw = true;
-            return true;
-        } else if (!stillHasTime){
+            isEnd = true;
+        } else if (!stillHasTime) {
             gameOver = true;
-            return true;
+            isEnd = true;
         }
-        return false;
+        if (isEnd) {
+            game_end.play(); // TODO: to be changed!
+        }
+        return isEnd;
     }
 
     private boolean isCheckmate() {
@@ -708,6 +729,7 @@ public class GamePanel extends JPanel implements Runnable {
         for (Piece piece : simPieces) {
             if (piece.color != Objects.requireNonNull(king).color && piece.canMove(king.col, king.row)) {
                 checkingPiece = piece;
+                move_check.play();
                 return true;
             }
         }

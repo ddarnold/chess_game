@@ -55,7 +55,7 @@ public class Menu extends JPanel {
             if (result == JOptionPane.YES_OPTION) {
                 startGame(GameType.AGAINST_AI_AS_WHITE);
             } else {
-                startGame(GameType.AGAINST_AI_AS_BLACK);
+                //startGame(GameType.AGAINST_AI_AS_BLACK);
             }
         });
         playOfflineButton.addActionListener(e -> startGame(GameType.LOCAL_2_PLAYER));

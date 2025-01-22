@@ -13,6 +13,9 @@ public class ChessTimer {
     private JLabel whiteTimerLabel;
     private JLabel blackTimerLabel;
     private GamePanel gamePanel;
+    private boolean tenSecondsWarning_White;
+    private boolean tenSecondsWarning_Black;
+    private SoundPlayer alert;
 
     public ChessTimer(JLabel whiteTimerLabel, JLabel blackTimerLabel, int startingTime, int increment, GamePanel gamePanel) {
         this.gamePanel = gamePanel;
@@ -21,9 +24,20 @@ public class ChessTimer {
         this.whiteTime = startingTime * 10;
         this.blackTime = startingTime * 10;
         this.increment = increment;
+        tenSecondsWarning_White = false;
+        tenSecondsWarning_Black = false;
+
+        alert = new SoundPlayer("/res/audio/tenseconds.wav");
+
 
         // Timer for white player
         whiteTimer = new Timer(1000, (ActionEvent e) -> {
+            if (whiteTime < 11 && !tenSecondsWarning_White) {
+                tenSecondsWarning_White = true;
+                alert.play();
+            }
+
+
             if (whiteTime > 0) {
                 whiteTime--;
                 updateTimerDisplay();
@@ -34,6 +48,11 @@ public class ChessTimer {
 
         // Timer for black player
         blackTimer = new Timer(1000, (ActionEvent e) -> {
+            if (blackTime < 11 && !tenSecondsWarning_Black) {
+                tenSecondsWarning_Black = true;
+                alert.play();
+            }
+
             if (blackTime > 0) {
                 blackTime--;
                 updateTimerDisplay();
@@ -52,8 +71,10 @@ public class ChessTimer {
         // Apply increment to the player who just finished their turn
         if (whiteTurn) {
             whiteTime += increment;
+            if (whiteTime > 10) tenSecondsWarning_White = false;
         } else {
             blackTime += increment;
+            if (blackTime > 10) tenSecondsWarning_Black = false;
         }
 
         // Swap active player
