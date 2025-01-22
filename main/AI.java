@@ -5,18 +5,35 @@ import piece.Piece;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Random;
+
 public class AI {
     private final ArrayList<Piece> pieces;
     private static final int MAX_DEPTH = 3;
+    private boolean isFirstMove = true; // Track if it's the first move
 
     public AI(ArrayList<Piece> pieces) {
         this.pieces = pieces;
     }
 
-
     public int[] getNextMove(int aiColor) {
+        if (isFirstMove) {
+            // Handle the first move randomly
+            isFirstMove = false;
+            return getRandomFirstMove(aiColor);
+        }
+
+        // Otherwise use the minimax algorithm for subsequent moves
         Move bestMove = minimax(MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, true, aiColor);
         return bestMove != null ? new int[]{bestMove.startCol, bestMove.startRow, bestMove.targetCol, bestMove.targetRow} : null;
+    }
+
+    private int[] getRandomFirstMove(int aiColor) {
+        List<Move> possibleMoves = generateAllMoves(aiColor);
+        Random rand = new Random();
+        // Choose a random move from the possible moves for the first move
+        Move randomMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
+        return new int[]{randomMove.startCol, randomMove.startRow, randomMove.targetCol, randomMove.targetRow};
     }
 
     private Move minimax(int depth, int alpha, int beta, boolean isMaximizingPlayer, int aiColor) {
@@ -25,10 +42,6 @@ public class AI {
         }
 
         List<Move> possibleMoves = generateAllMoves(isMaximizingPlayer ? aiColor : 1 - aiColor);
-
-        // Randomize the order of moves to ensure varied behavior
-        java.util.Collections.shuffle(possibleMoves);
-
         Move bestMove = null;
 
         for (Move move : possibleMoves) {
@@ -72,9 +85,6 @@ public class AI {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != color) {
-                                if (targetPiece != null && getPieceValue(piece) > getPieceValue(targetPiece)) {
-                                    continue;
-                                }
                                 moves.add(new Move(piece.col, piece.row, col, row, targetPiece));
                             }
                         }
@@ -130,7 +140,7 @@ public class AI {
             case QUEEN:
                 return 90;
             case KING:
-                return 5;
+                return 900;
             default:
                 return 0;
         }
