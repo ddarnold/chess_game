@@ -4,6 +4,8 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static main.Constants.PREFERENCES_SOUND;
+
 public class SoundPlayer {
     private Clip clip;
 
@@ -23,12 +25,14 @@ public class SoundPlayer {
     }
 
     public void play() {
-        if (clip != null) {
-            if (clip.isRunning()) {
-                clip.stop();  // Stop if it's already playing
+        if(JsonHandler.readJson(PREFERENCES_SOUND).equals("true")) {
+            if (clip != null) {
+                if (clip.isRunning()) {
+                    clip.stop();  // Stop if it's already playing
+                }
+                clip.setFramePosition(0);  // Reset to the beginning
+                clip.start();
             }
-            clip.setFramePosition(0);  // Reset to the beginning
-            clip.start();
         }
     }
 }

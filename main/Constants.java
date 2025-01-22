@@ -10,6 +10,7 @@ public class Constants {
     public static final int LAYOUT_HEIGHT = 760+BOTTOM_BAR+HEADER_HEIGHT+MARGIN_Y*2;
     public static final String PREFERENCES_PATH = "preferences.json";
     public static final String PREFERENCES_THEME = "theme";
+    public static final String PREFERENCES_SOUND = "sound_fx";
     public static final String GREEN_THEME = "GREEN";
     public static final String GREEN_THEME_TEXT = "Green Theme";
     public static final String BROWN_THEME = "BROWN";

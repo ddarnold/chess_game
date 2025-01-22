@@ -11,6 +11,7 @@ public class Settings extends JPanel {
         setBackground(Color.BLACK);
         setLayout(new BorderLayout());
         String theme = JsonHandler.readJson(PREFERENCES_THEME);
+        boolean soundEnabled = Boolean.parseBoolean(JsonHandler.readJson(PREFERENCES_SOUND)); // Default to true
 
         // Title with Margin
         JLabel title = new JLabel("Settings");
@@ -23,7 +24,18 @@ public class Settings extends JPanel {
         // Dropdown for theme selection
         String[] themes = {GREEN_THEME_TEXT, BROWN_THEME_TEXT, BLUE_THEME_TEXT};
         JPanel dropdownPanel = getDropdownPanel(themes, theme);
-        add(dropdownPanel, BorderLayout.CENTER);
+
+        // Sound Toggle Button
+        JPanel soundPanel = getSoundTogglePanel(soundEnabled);
+
+        // Center Panel for Layout
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBackground(Color.BLACK);
+        centerPanel.add(dropdownPanel);
+        centerPanel.add(soundPanel);
+
+        add(centerPanel, BorderLayout.CENTER);
 
         Utils.createMenuButton(parentWindow, this);
     }
@@ -67,4 +79,28 @@ public class Settings extends JPanel {
         dropdownPanel.add(themeSelector);
         return dropdownPanel;
     }
+
+    private static JPanel getSoundTogglePanel(boolean soundEnabled) {
+        JToggleButton soundToggle = new JToggleButton("Sound: " + (soundEnabled ? "ON" : "OFF"), soundEnabled);
+        soundToggle.setFont(Utils.deriveFont(20, Font.BOLD));
+        soundToggle.setFocusPainted(false);
+        soundToggle.setBackground(Color.GRAY);
+        soundToggle.setForeground(Color.BLACK);
+        soundToggle.setOpaque(true);
+        soundToggle.setBorderPainted(false);
+
+        soundToggle.addItemListener(e -> {
+            boolean isEnabled = soundToggle.isSelected();
+            soundToggle.setText("Sound: " + (isEnabled ? "ON" : "OFF"));
+            soundToggle.setBackground(isEnabled ? Color.GRAY : Color.DARK_GRAY); // Maintain background color
+            JsonHandler.writeJson(PREFERENCES_SOUND, String.valueOf(isEnabled));
+        });
+
+        JPanel soundPanel = new JPanel();
+        soundPanel.setBackground(Color.BLACK);
+        soundPanel.setBorder(BorderFactory.createEmptyBorder(20, 90, 400, 750));
+        soundPanel.add(soundToggle);
+        return soundPanel;
+    }
+
 }
