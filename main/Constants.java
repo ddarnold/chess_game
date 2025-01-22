@@ -8,7 +8,6 @@ public class Constants {
     public static final int LAYOUT_WIDTH = 1200+MARGIN_X*2;
     public static final int BOTTOM_BAR = 60;
     public static final int LAYOUT_HEIGHT = 760+BOTTOM_BAR+HEADER_HEIGHT+MARGIN_Y*2;
-    public static final String PREFERENCES_PATH = "preferences.json";
     public static final String PREFERENCES_THEME = "theme";
     public static final String PREFERENCES_SOUND = "sound_fx";
     public static final String GREEN_THEME = "GREEN";
