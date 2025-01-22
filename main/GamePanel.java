@@ -497,7 +497,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     // HELPER METHODS
     // State Management
-    private boolean isEndOfGame() {
+    public boolean isEndOfGame() {
         if (isCheckmate()) {
             gameOver = true;
             return true;
@@ -518,7 +518,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private boolean isStalemate() {
-        return kingCanNotMove(getKing(false)) && !anyPieceCanMove();
+        return kingCanNotMove(getKing(true)) && !anyPieceCanMove();
     }
 
     private boolean isFiftyMovesDraw(Piece activePiece) {
