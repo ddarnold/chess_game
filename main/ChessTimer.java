@@ -104,7 +104,7 @@ public class ChessTimer {
     public void stopTimers() {
         whiteTimer.stop();
         blackTimer.stop();
-        gamePanel.setStillHasTime(false);
+        gamePanel.setGameOverTimer();
 
     }
 }

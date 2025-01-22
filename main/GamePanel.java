@@ -1010,8 +1010,8 @@ public class GamePanel extends JPanel implements Runnable {
         return coordinates;
     }
 
-    public void setStillHasTime(boolean stillHasTime) {
-        this.stillHasTime = stillHasTime;
+    public void setGameOverTimer() {
+        stillHasTime = true;
         gameOver = true;
     }
 }
