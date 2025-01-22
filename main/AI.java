@@ -24,6 +24,10 @@ public class AI {
         }
 
         List<Move> possibleMoves = generateAllMoves(isMaximizingPlayer ? aiColor : 1 - aiColor);
+
+        // Randomize the order of moves to ensure varied behavior
+        java.util.Collections.shuffle(possibleMoves);
+
         Move bestMove = null;
 
         for (Move move : possibleMoves) {
@@ -67,6 +71,9 @@ public class AI {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != color) {
+                                if (targetPiece != null && (getPieceValue(piece) > getPieceValue(targetPiece) || isProtected(targetPiece))) {
+                                    continue;
+                                }
                                 moves.add(new Move(piece.col, piece.row, col, row, targetPiece));
                             }
                         }
@@ -75,6 +82,19 @@ public class AI {
             }
         }
         return moves;
+    }
+
+    private boolean isProtected(Piece piece) {
+        for (Piece ally : pieces) {
+            // Check if the ally piece is of the same color as the piece to be protected
+            if (ally.color == piece.color) {
+                // Check if the ally can move to the square where the piece is located (i.e., protect it)
+                if (ally.canMove(piece.col, piece.row)) {
+                    return true; // The piece is protected
+                }
+            }
+        }
+        return false; // The piece is not protected
     }
 
     private void executeMove(Move move) {
