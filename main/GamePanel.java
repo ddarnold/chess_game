@@ -55,6 +55,8 @@ public class GamePanel extends JPanel implements Runnable {
     private JLabel whiteTimerLabel;
     private JLabel blackTimerLabel;
 
+    public boolean stillHasTime = true;
+
     // CONSTRUCTOR
     public GamePanel(Main parentWindow, GameType selectedGameType, Object connection) {
         this.connection = connection;
@@ -110,20 +112,31 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void initializeTimer(Main parent) {
+
+        JPanel southPanel = new JPanel();
+        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
+        southPanel.setOpaque(false);
+        southPanel.setBorder(BorderFactory.createEmptyBorder(parent.getHeight()/2-50,1150,parent.getHeight()/2-50,50));
+
         // Timer label
         whiteTimerLabel = new JLabel("00:00", JLabel.CENTER);
         whiteTimerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
         whiteTimerLabel.setOpaque(false);
-        whiteTimerLabel.setBorder(new EmptyBorder(600,1150,300,50));
+        //whiteTimerLabel.setBorder(BorderFactory.createEmptyBorder(600,1150,300,50));
 
         blackTimerLabel = new JLabel("00:00", JLabel.CENTER);
         blackTimerLabel.setFont(Utils.deriveFont(20, Font.PLAIN));
         blackTimerLabel.setOpaque(false);
-        blackTimerLabel.setBorder(new EmptyBorder(300,1150,600,50));
+        //blackTimerLabel.setBorder(BorderFactory.createEmptyBorder(300,1150,600,50));
 
+
+        southPanel.add(blackTimerLabel);
+        southPanel.add(whiteTimerLabel);
         // Add timer label to the panel
-        add(whiteTimerLabel, BorderLayout.SOUTH);
-        add(blackTimerLabel, BorderLayout.NORTH);
+//        add(whiteTimerLabel, BorderLayout.NORTH);
+//        add(blackTimerLabel, BorderLayout.WEST);
+        add(southPanel, BorderLayout.EAST);
+
 
         // Show the TimeSettingsDialog to get the time and increment values
         TimeSettingsDialog dialog = new TimeSettingsDialog(parent);
@@ -134,7 +147,7 @@ public class GamePanel extends JPanel implements Runnable {
             int time = dialog.getTime();        // Starting time in minutes
             int increment = dialog.getIncrement();  // Increment per turn in seconds
             // Initialize the chess timer with the user inputs
-            chessTimer = new ChessTimer(whiteTimerLabel, blackTimerLabel, time, increment);
+            chessTimer = new ChessTimer(whiteTimerLabel, blackTimerLabel, time, increment, GamePanel.this);
         } else {
             JOptionPane.showMessageDialog(parent, "Game settings were not configured.");
             parent.switchToPanel(new Menu(parent));
@@ -500,13 +513,21 @@ public class GamePanel extends JPanel implements Runnable {
 
         if (gameOver) {
             String s;
-            if (currentColor == WHITE) {
-                s = "White wins";
-            } else {
-                s = "Black wins";
+            if (stillHasTime) {
+                if (currentColor == WHITE) {
+                    s = "White wins";
+                } else {
+                    s = "Black wins";
+                }
+            }else{
+                if (currentColor == WHITE) {
+                    s = "Black wins";
+                } else {
+                    s = "White wins";
+                }
             }
             g2d.setFont(Utils.deriveFont(90, Font.PLAIN));
-            g2d.fillRoundRect(180, 330, currentColor == WHITE ? 475 : 450, 100, 20, 20);
+            g2d.fillRoundRect(180, 330, 475, 100, 20, 20);
             g2d.setColor(Color.RED);
             g2d.drawString(s, 200, 410);
         } else {
@@ -569,6 +590,9 @@ public class GamePanel extends JPanel implements Runnable {
             return true;
         } else if (isFiftyMovesDraw(activePiece) || isRepetitionDraw() || isDeadPosition()) {
             draw = true;
+            return true;
+        } else if (!stillHasTime){
+            gameOver = true;
             return true;
         }
         return false;
@@ -984,5 +1008,10 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         return coordinates;
+    }
+
+    public void setStillHasTime(boolean stillHasTime) {
+        this.stillHasTime = stillHasTime;
+        gameOver = true;
     }
 }

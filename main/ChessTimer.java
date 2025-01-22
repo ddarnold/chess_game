@@ -12,12 +12,14 @@ public class ChessTimer {
     private boolean whiteTurn = true;
     private JLabel whiteTimerLabel;
     private JLabel blackTimerLabel;
+    private GamePanel gamePanel;
 
-    public ChessTimer(JLabel whiteTimerLabel, JLabel blackTimerLabel, int startingTime, int increment) {
+    public ChessTimer(JLabel whiteTimerLabel, JLabel blackTimerLabel, int startingTime, int increment, GamePanel gamePanel) {
+        this.gamePanel = gamePanel;
         this.whiteTimerLabel = whiteTimerLabel;
         this.blackTimerLabel = blackTimerLabel;
-        this.whiteTime = startingTime * 60;
-        this.blackTime = startingTime * 60;
+        this.whiteTime = startingTime * 10;
+        this.blackTime = startingTime * 10;
         this.increment = increment;
 
         // Timer for white player
@@ -102,5 +104,7 @@ public class ChessTimer {
     public void stopTimers() {
         whiteTimer.stop();
         blackTimer.stop();
+        gamePanel.setStillHasTime(false);
+
     }
 }
