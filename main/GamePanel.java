@@ -173,38 +173,36 @@ public class GamePanel extends JPanel implements Runnable {
     // EVENT HANDLING
     private void executeAIMove() {
         int[] move = ai.getNextMove(opponentColor);
-        executeMultiplayerOpponentMove(move);
+
+        executeOpponentMove(move);
     }
 
-    private void executeMultiplayerOpponentMove(int[] move) {
-        if (move != null) {
-            Piece piece = getPieceAt(move[0], move[1]);
-            if (piece != null) {
-                Piece targetPiece = getPieceAt(move[2], move[3]);
-
-                // Remove the captured piece
-                if (targetPiece != null && targetPiece.color != opponentColor) {
-                    pieces.remove(targetPiece);
-                }
-
-                // Move the AI's piece
-                piece.col = move[2];
-                piece.row = move[3];
-                piece.updatePosition();
-
-                // Check for promotion
-                if (piece.type == Type.PAWN && (piece.row == 0 || piece.row == 7)) {
-                    promoteAIPawn(piece);
-                } else {
-                    piece.updatePosition();
-                }
-
-                // Switch the turn to the player
-                changePlayer();
-            }
-        } else {
-            gameOver = true; // Stalemate or checkmate
+    private void executeOpponentMove(int[] move) {
+        // Get the piece at the starting position
+        Piece movingPiece = getPieceAt(move[0], move[1]);
+        if (movingPiece == null) {
+            throw new IllegalStateException("No piece found at the starting position: [" + move[0] + "," + move[1] + "]");
         }
+
+        // Get the target piece, if any
+        Piece targetPiece = getPieceAt(move[2], move[3]);
+
+        // If the target piece is an opponent's piece, capture it
+        if (targetPiece != null && targetPiece.color != movingPiece.color) {
+            pieces.remove(targetPiece); // Remove the captured piece
+        }
+
+        // Update the piece's position
+        movingPiece.col = move[2];
+        movingPiece.row = move[3];
+        movingPiece.updatePosition();
+
+        // Check for promotion
+        if (movingPiece.type == Type.PAWN && (movingPiece.row == 0 || movingPiece.row == 7)) {
+            promoteAIPawn(movingPiece);
+        }
+
+        changePlayer();
     }
 
     private void executeMultiplayerMove() {
@@ -216,7 +214,8 @@ public class GamePanel extends JPanel implements Runnable {
             opponentMove = ((GameClient) connection).receiveMessage();
         }
 
-        executeMultiplayerOpponentMove(parseCoordinates(opponentMove));
+        executeOpponentMove(parseCoordinates(opponentMove));
+        finalizeMove();
     }
 
     private void handlePlayerMove() {
@@ -497,7 +496,7 @@ public class GamePanel extends JPanel implements Runnable {
 
     // HELPER METHODS
     // State Management
-    public boolean isEndOfGame() {
+    private boolean isEndOfGame() {
         if (isCheckmate()) {
             gameOver = true;
             return true;
@@ -518,7 +517,7 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private boolean isStalemate() {
-        return kingCanNotMove(getKing(true)) && !anyPieceCanMove();
+        return kingCanNotMove(getKing(false)) && !anyPieceCanMove();
     }
 
     private boolean isFiftyMovesDraw(Piece activePiece) {

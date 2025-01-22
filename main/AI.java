@@ -135,7 +135,7 @@ public class AI {
                         if (piece.canMove(col, row)) {
                             Piece targetPiece = getPieceAt(col, row);
                             if (targetPiece == null || targetPiece.color != color) {
-                                if (piece.type == Type.QUEEN && targetPiece != null && getPieceValue(targetPiece) < getPieceValue(piece) && isProtected(targetPiece)) {
+                                if ((piece.type == Type.QUEEN && targetPiece != null && getPieceValue(targetPiece) < getPieceValue(piece)) || isProtected(targetPiece)) {
                                     continue;
                                 }
                                 moves.add(new Move(piece.col, piece.row, col, row, targetPiece, POSITIONAL_VALUES[row][col]));
