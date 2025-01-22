@@ -173,38 +173,42 @@ public class GamePanel extends JPanel implements Runnable {
     // EVENT HANDLING
     private void executeAIMove() {
         int[] move = ai.getNextMove(opponentColor);
-        executeMultiplayerOpponentMove(move);
+        executeOpponentMove(move);
     }
 
-    private void executeMultiplayerOpponentMove(int[] move) {
-        if (move != null) {
-            Piece piece = getPieceAt(move[0], move[1]);
-            if (piece != null) {
-                Piece targetPiece = getPieceAt(move[2], move[3]);
-
-                // Remove the captured piece
-                if (targetPiece != null && targetPiece.color != opponentColor) {
-                    pieces.remove(targetPiece);
-                }
-
-                // Move the AI's piece
-                piece.col = move[2];
-                piece.row = move[3];
-                piece.updatePosition();
-
-                // Check for promotion
-                if (piece.type == Type.PAWN && (piece.row == 0 || piece.row == 7)) {
-                    promoteAIPawn(piece);
-                } else {
-                    piece.updatePosition();
-                }
-
-                // Switch the turn to the player
-                changePlayer();
-            }
-        } else {
-            gameOver = true; // Stalemate or checkmate
-        }
+    private void executeOpponentMove(int[] move) {
+        activePiece = getPieceAt(move[0], move[1]);
+        activePiece.col = move[2];
+        activePiece.row = move[3];
+//        if (move != null) {
+//            Piece piece = getPieceAt(move[0], move[1]);
+//            activePiece = piece;
+//            if (piece != null) {
+//                Piece targetPiece = getPieceAt(move[2], move[3]);
+//
+//                // Remove the captured piece
+//                if (targetPiece != null && targetPiece.color != opponentColor) {
+//                    pieces.remove(targetPiece);
+//                }
+//
+//                // Move the AI's piece
+//                piece.col = move[2];
+//                piece.row = move[3];
+//                piece.updatePosition();
+//
+//                // Check for promotion
+//                if (piece.type == Type.PAWN && (piece.row == 0 || piece.row == 7)) {
+//                    promoteAIPawn(piece);
+//                } else {
+//                    piece.updatePosition();
+//                }
+//
+//                // Switch the turn to the player
+//                changePlayer();
+//            }
+//        } else {
+//            gameOver = true; // Stalemate or checkmate
+//        }
     }
 
     private void executeMultiplayerMove() {
@@ -216,7 +220,8 @@ public class GamePanel extends JPanel implements Runnable {
             opponentMove = ((GameClient) connection).receiveMessage();
         }
 
-        executeMultiplayerOpponentMove(parseCoordinates(opponentMove));
+        executeOpponentMove(parseCoordinates(opponentMove));
+        finalizeMove();
     }
 
     private void handlePlayerMove() {
