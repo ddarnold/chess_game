@@ -43,7 +43,21 @@ public class Menu extends JPanel {
         RoundedButton playOnlineButton = createRoundedButton("Play Online");
         JButton settingsButton = createRoundedButton("Settings");
         JButton exitButton = createRoundedButton("Exit");
-        playWithAiButton.addActionListener(e -> startGame(GameType.AGAINST_AI_AS_WHITE));
+        playWithAiButton.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                    null,
+                    "Would you like to play as white?",
+                    "Confirm",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (result == JOptionPane.YES_OPTION) {
+                startGame(GameType.AGAINST_AI_AS_WHITE);
+            } else {
+                startGame(GameType.AGAINST_AI_AS_BLACK);
+            }
+        });
         playOfflineButton.addActionListener(e -> startGame(GameType.LOCAL_2_PLAYER));
         playOnlineButton.addActionListener(e -> showLobby());
         settingsButton.addActionListener(e -> showSettings());

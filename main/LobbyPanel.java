@@ -7,16 +7,21 @@ import multiplayer.GameServerBroadcaster;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
+
+import static main.Utils.createRoundedButton;
 
 public class LobbyPanel extends JPanel {
     private final Main parentWindow;
 
-    private JTextArea serverList;
+    private final JTextArea serverList;
     private JButton hostButton, refreshButton, joinButton;
 
     private GameServer server;
     private GameClient client;
     private Thread discoveryThread;
+    private Set<String> discoveredServers = new HashSet<>();
 
     public LobbyPanel(Main parentWindow) {
         this.parentWindow = parentWindow;
@@ -25,18 +30,22 @@ public class LobbyPanel extends JPanel {
 
         // Server List
         serverList = new JTextArea();
+        serverList.setBackground(Color.BLACK);
+        serverList.setForeground(Color.WHITE);
+        serverList.setMargin(new Insets(20, 20, 20, 20));
+        serverList.setFont(Utils.deriveFont(25,Font.PLAIN));
         serverList.setEditable(false);
         add(new JScrollPane(serverList), BorderLayout.CENTER);
 
         // Buttons
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.BLACK);
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(200, 100, 0, 750));
 
-        hostButton = new JButton("Host Game");
-        refreshButton = new JButton("Refresh");
-        joinButton = new JButton("Join Game");
-
+        RoundedButton hostButton = createRoundedButton("Host Game");
+        RoundedButton refreshButton = createRoundedButton("Refresh");
+        RoundedButton joinButton = createRoundedButton("Join Game");
 
         buttonPanel.add(hostButton);
         buttonPanel.add(refreshButton);
@@ -68,7 +77,14 @@ public class LobbyPanel extends JPanel {
     private void discoverGames() {
         System.out.println("Discovering games...");
         GameClientDiscovery discovery = new GameClientDiscovery();
-        discovery.setListener((serverAddress, serverPort) -> SwingUtilities.invokeLater(() -> serverList.append(serverAddress + ":" + serverPort + "\n")));
+
+        discovery.setListener((serverAddress, serverPort) -> SwingUtilities.invokeLater(() -> {
+            String server = serverAddress + ":" + serverPort;
+            if (!discoveredServers.contains(server)) {
+                discoveredServers.add(server);
+                discoveredServers.forEach(s -> serverList.append(s + "\n"));
+            }
+        }));
 
         discoveryThread = new Thread(discovery);
         discoveryThread.start();
