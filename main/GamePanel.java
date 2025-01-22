@@ -80,10 +80,10 @@ public class GamePanel extends JPanel implements Runnable {
             this.isAi = true;
             this.ai = new AI(pieces);
             opponentColor = BLACK;
-        } else {
+        } else if (selectedGameType == GameType.LOCAL_2_PLAYER) {
             this.isAi = false;
             opponentColor = BLACK;
-        }
+        } else throw new IllegalArgumentException();
     }
 
 
