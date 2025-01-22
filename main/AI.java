@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class AI {
+    private final Random random = new Random();
     private final ArrayList<Piece> pieces;
     private static final int MAX_DEPTH = 3;
 
@@ -26,24 +27,8 @@ public class AI {
         this.pieces = pieces;
     }
 
-    private boolean isFirstMove = true; // Track if it's the first move
-
+    // Returns a move in the format [startCol, startRow, targetCol, targetRow]
     public int[] getNextMove(int aiColor) {
-        if (isFirstMove) {
-            isFirstMove = false; // First move will now be over
-            Move randomOpening = getRandomOpeningMove(aiColor);
-            if (randomOpening != null) {
-                return new int[]{randomOpening.startCol, randomOpening.startRow, randomOpening.targetCol, randomOpening.targetRow};
-            }
-        }
-
-        // Use minimax for subsequent moves
-        Move bestMove = minimax(MAX_DEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, true, aiColor);
-        return bestMove != null ? new int[]{bestMove.startCol, bestMove.startRow, bestMove.targetCol, bestMove.targetRow} : null;
-    }
-
-    private Move getRandomOpeningMove(int aiColor) {
-        List<Move> openingMoves = new ArrayList<>();
         for (Piece piece : pieces) {
             if (piece.color == aiColor) {
                 for (int col = 0; col < 8; col++) {
