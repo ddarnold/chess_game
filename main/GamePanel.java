@@ -237,10 +237,11 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void update() {
-        if (promotion) {
-            promoting();
-        } else if (!gameOver && !stalemate) {
-            if (currentColor == opponentColor && isAi) {
+
+        if (!gameOver && !stalemate) {
+            if (promotion) {
+                promoting();
+            } else if (currentColor == opponentColor && isAi) {
                 executeAIMove();
             } else if (currentColor == opponentColor && isMultiplayer) {
                 executeMultiplayerMove();
