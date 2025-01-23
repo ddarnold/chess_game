@@ -21,8 +21,8 @@ public class ChessTimer {
         this.gamePanel = gamePanel;
         this.whiteTimerLabel = whiteTimerLabel;
         this.blackTimerLabel = blackTimerLabel;
-        this.whiteTime = startingTime * 10;
-        this.blackTime = startingTime * 10;
+        this.whiteTime = startingTime * 60;
+        this.blackTime = startingTime * 60;
         this.increment = increment;
         tenSecondsWarning_White = false;
         tenSecondsWarning_Black = false;

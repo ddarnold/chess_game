@@ -237,10 +237,11 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void update() {
-        if (promotion) {
-            promoting();
-        } else if (!gameOver && !stalemate) {
-            if (currentColor == opponentColor && isAi) {
+
+        if (!gameOver && !stalemate) {
+            if (promotion) {
+                promoting();
+            } else if (currentColor == opponentColor && isAi) {
                 executeAIMove();
             } else if (currentColor == opponentColor && isMultiplayer) {
                 executeMultiplayerMove();
@@ -254,6 +255,22 @@ public class GamePanel extends JPanel implements Runnable {
     private void executeAIMove() {
         int[] move = ai.getNextMove(opponentColor);
         executeMultiplayerOpponentMove(move);
+        reposition();
+    }
+
+    private void reposition() {
+        for (Piece piece : pieces) {
+            piece.x = piece.getX(piece.col);
+            piece.y = piece.getY(piece.row);
+        }
+    }
+    private void reposition(Piece activePiece) {
+        for (Piece piece : pieces) {
+            if (piece != activePiece) {
+                piece.x = piece.getX(piece.col);
+                piece.y = piece.getY(piece.row);
+            }
+        }
     }
 
     private void executeMultiplayerOpponentMove(int[] move) {
@@ -344,6 +361,7 @@ public class GamePanel extends JPanel implements Runnable {
         activePiece.y = mouse.y - Board.HALF_SQUARE_SIZE - MARGIN_Y;
         activePiece.col = activePiece.getCol(activePiece.x);
         activePiece.row = activePiece.getRow(activePiece.y);
+        reposition(activePiece);
 
         // Check if the piece is hovering over a reachable square
         if (activePiece.canMove(activePiece.col, activePiece.row)) {
